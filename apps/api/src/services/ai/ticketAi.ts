@@ -27,7 +27,7 @@ function fallbackTicketAnalysis(subject: string, description: string): AnalysisR
   let category = 'General';
   let priority: Priority = Priority.MEDIUM;
   let autoResolvable = false;
-  let autoReply: string | null = null;
+  let autoReply = `Thank you for reaching out to support regarding "${subject}". Our support team has received your ticket and will investigate shortly.`;
 
   if (
     combined.includes('password') ||
@@ -37,12 +37,10 @@ function fallbackTicketAnalysis(subject: string, description: string): AnalysisR
     combined.includes('forgot')
   ) {
     category = 'Account';
-    if (combined.includes('password') || combined.includes('reset') || combined.includes('forgot')) {
-      priority = Priority.LOW;
-      autoResolvable = true;
-      autoReply =
-        'You can reset your password from the sign-in page by selecting "Forgot Password" and following the instructions sent to your email.';
-    }
+    priority = Priority.LOW;
+    autoResolvable = true;
+    autoReply =
+      'You can easily reset your password from the sign-in page by selecting "Forgot Password" and entering your email address to receive reset instructions.';
   } else if (
     combined.includes('bill') ||
     combined.includes('invoice') ||
@@ -52,6 +50,8 @@ function fallbackTicketAnalysis(subject: string, description: string): AnalysisR
   ) {
     category = 'Billing';
     priority = Priority.HIGH;
+    autoReply =
+      'Thank you for contacting billing support. We have received your inquiry regarding billing/payments and our financial support team is reviewing your account details.';
   } else if (
     combined.includes('bug') ||
     combined.includes('error') ||
@@ -62,6 +62,8 @@ function fallbackTicketAnalysis(subject: string, description: string): AnalysisR
   ) {
     category = 'Technical';
     priority = Priority.HIGH;
+    autoReply =
+      'Thank you for reporting this technical issue. Our engineering team has logged the report and is actively looking into it.';
   } else if (
     combined.includes('urgent') ||
     combined.includes('down') ||
@@ -69,9 +71,11 @@ function fallbackTicketAnalysis(subject: string, description: string): AnalysisR
     combined.includes('outage')
   ) {
     priority = Priority.URGENT;
+    autoReply =
+      'This urgent request has been flagged with highest priority for immediate review by our technical team.';
   }
 
-  const summary = `Support request regarding ${subject.trim() || 'account or technical help'}.`;
+  const summary = `Customer request regarding ${subject.trim() || 'support'}.`;
 
   return {
     summary,
@@ -88,7 +92,7 @@ export async function analyzeTicketWithAi(
 ): Promise<AnalysisResult> {
   try {
     const prompt = `ANALYZE_TICKET
-Analyze this customer support ticket.
+Analyze this customer support ticket and provide a helpful response.
 
 Return only valid JSON with this shape:
 {
@@ -96,10 +100,11 @@ Return only valid JSON with this shape:
   "category": "Billing" | "Technical" | "Account" | "General" | "Other",
   "priority": "LOW" | "MEDIUM" | "HIGH" | "URGENT",
   "autoResolvable": boolean,
-  "autoReply": string | null
+  "autoReply": "Clear, helpful customer response addressing their issue"
 }
 
-Only set autoResolvable true for simple, low-risk requests like password reset instructions, simple login help, or business hours. Do not auto-resolve billing disputes, security issues, outages, refunds, account deletion, or anything ambiguous.
+Provide a helpful, polite customer response in "autoReply" for ALL support requests.
+Only set autoResolvable true for simple, low-risk requests like password reset instructions, simple login help, or business hours. For complex billing, technical bugs, or custom questions, set autoResolvable false so human agents can review while the customer receives your helpful initial response.
 
 Subject: ${subject}
 Description: ${description}`;
@@ -116,7 +121,10 @@ Description: ${description}`;
         : `Ticket regarding ${subject}`;
     const category = typeof parsed.category === 'string' ? parsed.category : 'Other';
     const priority = typeof parsed.priority === 'string' ? parsed.priority : Priority.MEDIUM;
-    const autoReply = typeof parsed.autoReply === 'string' ? parsed.autoReply.trim() : null;
+    const autoReply =
+      typeof parsed.autoReply === 'string' && parsed.autoReply.trim()
+        ? parsed.autoReply.trim()
+        : `Thank you for contacting support regarding "${subject}". We have received your request and are reviewing it.`;
 
     return {
       summary,
@@ -124,7 +132,7 @@ Description: ${description}`;
       priority: allowedPriorities.has(priority as Priority)
         ? (priority as Priority)
         : Priority.MEDIUM,
-      autoResolvable: parsed.autoResolvable === true && Boolean(autoReply),
+      autoResolvable: parsed.autoResolvable === true,
       autoReply,
     };
   } catch (error) {
@@ -167,14 +175,9 @@ ${draft}`;
 export async function enrichTicketWithAi(ticketId: string, subject: string, description: string) {
   try {
     const analysis = await analyzeTicketWithAi(subject, description);
-    const aiUser =
-      analysis.autoResolvable && analysis.autoReply
-        ? await ensureAiAssistantUser()
-        : null;
+    const aiUser = await ensureAiAssistantUser();
 
-    const replyBody = analysis.autoReply
-      ? `${analysis.autoReply}\n\nThis response was generated by AI. Reply here if you still need help.`
-      : null;
+    const replyBody = `${analysis.autoReply}\n\nThis response was generated by AI Support. Reply to this email if you need further help.`;
 
     let customerEmailToNotify: string | null = null;
 
@@ -187,8 +190,8 @@ export async function enrichTicketWithAi(ticketId: string, subject: string, desc
           aiSummary: analysis.summary,
           category: analysis.category,
           aiSuggestedPriority: analysis.priority,
-          status: aiUser ? TicketStatus.AUTO_RESOLVED : undefined,
-          resolvedAt: aiUser ? new Date() : undefined,
+          status: analysis.autoResolvable ? TicketStatus.AUTO_RESOLVED : undefined,
+          resolvedAt: analysis.autoResolvable ? new Date() : undefined,
         },
         include: {
           customer: true,
@@ -197,27 +200,25 @@ export async function enrichTicketWithAi(ticketId: string, subject: string, desc
 
       customerEmailToNotify = updated.customer.email;
 
-      if (aiUser && replyBody) {
-        await tx.reply.create({
-          data: {
-            ticketId,
-            authorId: aiUser.id,
-            body: replyBody,
-          },
-        });
-        await tx.auditEvent.create({
-          data: {
-            ticketId,
-            actorId: aiUser.id,
-            action: 'ticket.auto_resolved',
-            fromValue: TicketStatus.OPEN,
-            toValue: TicketStatus.AUTO_RESOLVED,
-          },
-        });
-      }
+      await tx.reply.create({
+        data: {
+          ticketId,
+          authorId: aiUser.id,
+          body: replyBody,
+        },
+      });
+      await tx.auditEvent.create({
+        data: {
+          ticketId,
+          actorId: aiUser.id,
+          action: analysis.autoResolvable ? 'ticket.auto_resolved' : 'ticket.ai_responded',
+          fromValue: TicketStatus.OPEN,
+          toValue: analysis.autoResolvable ? TicketStatus.AUTO_RESOLVED : TicketStatus.OPEN,
+        },
+      });
     });
 
-    if (aiUser && replyBody && customerEmailToNotify) {
+    if (customerEmailToNotify) {
       void sendTicketReplyEmail({
         customerEmail: customerEmailToNotify,
         ticketSubject: subject,
