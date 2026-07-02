@@ -21,11 +21,73 @@ export type AnalysisResult = {
   autoReply: string | null;
 };
 
+function fallbackTicketAnalysis(subject: string, description: string): AnalysisResult {
+  const combined = `${subject} ${description}`.toLowerCase();
+
+  let category = 'General';
+  let priority: Priority = Priority.MEDIUM;
+  let autoResolvable = false;
+  let autoReply: string | null = null;
+
+  if (
+    combined.includes('password') ||
+    combined.includes('reset') ||
+    combined.includes('login') ||
+    combined.includes('sign in') ||
+    combined.includes('forgot')
+  ) {
+    category = 'Account';
+    if (combined.includes('password') || combined.includes('reset') || combined.includes('forgot')) {
+      priority = Priority.LOW;
+      autoResolvable = true;
+      autoReply =
+        'You can reset your password from the sign-in page by selecting "Forgot Password" and following the instructions sent to your email.';
+    }
+  } else if (
+    combined.includes('bill') ||
+    combined.includes('invoice') ||
+    combined.includes('payment') ||
+    combined.includes('charge') ||
+    combined.includes('refund')
+  ) {
+    category = 'Billing';
+    priority = Priority.HIGH;
+  } else if (
+    combined.includes('bug') ||
+    combined.includes('error') ||
+    combined.includes('broken') ||
+    combined.includes('crash') ||
+    combined.includes('failed') ||
+    combined.includes('issue')
+  ) {
+    category = 'Technical';
+    priority = Priority.HIGH;
+  } else if (
+    combined.includes('urgent') ||
+    combined.includes('down') ||
+    combined.includes('emergency') ||
+    combined.includes('outage')
+  ) {
+    priority = Priority.URGENT;
+  }
+
+  const summary = `Support request regarding ${subject.trim() || 'account or technical help'}.`;
+
+  return {
+    summary,
+    category,
+    priority,
+    autoResolvable,
+    autoReply,
+  };
+}
+
 export async function analyzeTicketWithAi(
   subject: string,
   description: string,
 ): Promise<AnalysisResult> {
-  const prompt = `ANALYZE_TICKET
+  try {
+    const prompt = `ANALYZE_TICKET
 Analyze this customer support ticket.
 
 Return only valid JSON with this shape:
@@ -42,29 +104,33 @@ Only set autoResolvable true for simple, low-risk requests like password reset i
 Subject: ${subject}
 Description: ${description}`;
 
-  const text = await getAiProvider().generateText(prompt, {
-    temperature: 0.1,
-    responseMimeType: 'application/json',
-  });
-  const parsed = parseJsonObject(text);
+    const text = await getAiProvider().generateText(prompt, {
+      temperature: 0.1,
+      responseMimeType: 'application/json',
+    });
+    const parsed = parseJsonObject(text);
 
-  const summary =
-    typeof parsed.summary === 'string' && parsed.summary.trim()
-      ? parsed.summary.trim()
-      : `Ticket regarding ${subject}`;
-  const category = typeof parsed.category === 'string' ? parsed.category : 'Other';
-  const priority = typeof parsed.priority === 'string' ? parsed.priority : Priority.MEDIUM;
-  const autoReply = typeof parsed.autoReply === 'string' ? parsed.autoReply.trim() : null;
+    const summary =
+      typeof parsed.summary === 'string' && parsed.summary.trim()
+        ? parsed.summary.trim()
+        : `Ticket regarding ${subject}`;
+    const category = typeof parsed.category === 'string' ? parsed.category : 'Other';
+    const priority = typeof parsed.priority === 'string' ? parsed.priority : Priority.MEDIUM;
+    const autoReply = typeof parsed.autoReply === 'string' ? parsed.autoReply.trim() : null;
 
-  return {
-    summary,
-    category: allowedCategories.has(category) ? category : 'Other',
-    priority: allowedPriorities.has(priority as Priority)
-      ? (priority as Priority)
-      : Priority.MEDIUM,
-    autoResolvable: parsed.autoResolvable === true && Boolean(autoReply),
-    autoReply,
-  };
+    return {
+      summary,
+      category: allowedCategories.has(category) ? category : 'Other',
+      priority: allowedPriorities.has(priority as Priority)
+        ? (priority as Priority)
+        : Priority.MEDIUM,
+      autoResolvable: parsed.autoResolvable === true && Boolean(autoReply),
+      autoReply,
+    };
+  } catch (error) {
+    console.warn('AI API quota limit hit or failed, using Smart Fallback engine:', error instanceof Error ? error.message : error);
+    return fallbackTicketAnalysis(subject, description);
+  }
 }
 
 export async function summarizeTicket(subject: string, description: string) {

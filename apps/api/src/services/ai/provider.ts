@@ -63,7 +63,7 @@ const geminiProvider: AiProvider = {
     }
 
     const tryModels = Array.from(
-      new Set([configuredModel, 'gemini-1.5-flash', 'gemini-1.5-pro', 'gemini-2.0-flash', 'gemini-2.0-flash-lite'])
+      new Set(['gemini-1.5-flash', configuredModel, 'gemini-1.5-pro', 'gemini-2.0-flash', 'gemini-2.0-flash-lite'])
     );
     let lastError: Error | null = null;
 
