@@ -12,7 +12,21 @@ export function getAiProvider(): AiProvider {
     return mockAiProvider;
   }
 
-  return geminiProvider;
+  const provider = (process.env.AI_PROVIDER || 'groq').toLowerCase();
+
+  if (provider === 'gemini' && process.env.GEMINI_API_KEY) {
+    return geminiProvider;
+  }
+
+  if (process.env.GROQ_API_KEY || provider === 'groq') {
+    return groqProvider;
+  }
+
+  if (process.env.GEMINI_API_KEY) {
+    return geminiProvider;
+  }
+
+  return groqProvider;
 }
 
 const mockAiProvider: AiProvider = {
@@ -47,6 +61,86 @@ const mockAiProvider: AiProvider = {
     }
 
     return 'Mock AI response.';
+  },
+};
+
+const groqProvider: AiProvider = {
+  async generateText(prompt, options = {}) {
+    const apiKey = process.env.GROQ_API_KEY;
+    const configuredModel = process.env.GROQ_MODEL ?? 'llama-3.3-70b-versatile';
+
+    if (!apiKey || apiKey.includes('replace-with')) {
+      throw new Error('GROQ_API_KEY is not configured.');
+    }
+
+    const tryModels = Array.from(
+      new Set([configuredModel, 'llama-3.3-70b-versatile', 'llama-3.1-8b-instant', 'qwen-2.5-32b', 'mixtral-8x7b-32768'])
+    );
+    let lastError: Error | null = null;
+
+    for (const model of tryModels) {
+      for (let attempt = 0; attempt < 3; attempt++) {
+        try {
+          const bodyPayload: Record<string, unknown> = {
+            model,
+            messages: [
+              {
+                role: 'system',
+                content:
+                  'You are an intelligent customer support AI assistant. When requested for JSON, always reply with valid raw JSON only without extra markdown formatting or conversational text.',
+              },
+              {
+                role: 'user',
+                content: prompt,
+              },
+            ],
+            temperature: options.temperature ?? 0.2,
+          };
+
+          if (options.responseMimeType === 'application/json') {
+            bodyPayload.response_format = { type: 'json_object' };
+          }
+
+          const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${apiKey}`,
+            },
+            body: JSON.stringify(bodyPayload),
+          });
+
+          if (response.status === 429 && attempt < 2) {
+            // Groq rate limit - wait 2.5 seconds and retry
+            await new Promise((resolve) => setTimeout(resolve, 2500));
+            continue;
+          }
+
+          if (!response.ok) {
+            const errorText = await response.text();
+            lastError = new Error(`Groq request failed (${model}): ${response.status} ${errorText}`);
+            break; // Move to next model
+          }
+
+          const data = (await response.json()) as {
+            choices?: Array<{
+              message?: {
+                content?: string;
+              };
+            }>;
+          };
+
+          const content = data.choices?.[0]?.message?.content?.trim();
+          if (content) {
+            return content;
+          }
+        } catch (err) {
+          lastError = err instanceof Error ? err : new Error(String(err));
+        }
+      }
+    }
+
+    throw lastError ?? new Error('Groq API call failed across all models.');
   },
 };
 
@@ -96,7 +190,6 @@ const geminiProvider: AiProvider = {
           );
 
           if (response.status === 429 && attempt < 2) {
-            // Quota / Rate limited on free tier - wait 2.5 seconds and retry
             await new Promise((resolve) => setTimeout(resolve, 2500));
             continue;
           }
@@ -104,7 +197,7 @@ const geminiProvider: AiProvider = {
           if (!response.ok) {
             const errorText = await response.text();
             lastError = new Error(`Gemini request failed (${model}): ${response.status} ${errorText}`);
-            break; // Move to next model
+            break;
           }
 
           const data = (await response.json()) as {
