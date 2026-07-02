@@ -22,7 +22,7 @@ async function handleInboundEmail(payload: unknown): Promise<InboundFields | nul
     return null;
   }
 
-  const body = payload as Record<string, any>;
+  const body = payload as Record<string, unknown>;
   const data = body.data && typeof body.data === 'object' ? body.data : {};
 
   // Resolve raw sender field

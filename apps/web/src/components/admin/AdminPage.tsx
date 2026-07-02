@@ -312,9 +312,11 @@ export function AdminPage() {
 
   useEffect(() => {
     void loadUsers();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   useEffect(() => {
     if (tab === 'tickets') void loadTickets();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tab]);
 
   // ── Users API ──────────────────────────────────────────
