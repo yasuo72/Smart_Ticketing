@@ -1,12 +1,13 @@
 import 'dotenv/config';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { PrismaClient } from '../generated/prisma/client.js';
+import { ensureDatabaseUrl } from './databaseUrl.js';
 
 const globalForPrisma = globalThis as unknown as {
   prisma?: PrismaClient;
 };
 
-const connectionString = process.env.DATABASE_URL;
+const connectionString = ensureDatabaseUrl(process.env);
 
 if (!connectionString) {
   throw new Error('DATABASE_URL is required to initialize Prisma.');
