@@ -41,12 +41,21 @@ export function createApp() {
           return;
         }
 
-        if (allowedOrigins.includes(origin)) {
-          callback(null, true);
+        if (
+          process.env.WEB_ORIGIN === '*' ||
+          allowedOrigins.includes(origin) ||
+          allowedOrigins.includes('*') ||
+          origin.endsWith('.vercel.app') ||
+          origin.endsWith('.netlify.app') ||
+          origin.endsWith('.up.railway.app') ||
+          origin.startsWith('http://localhost') ||
+          origin.startsWith('http://127.0.0.1')
+        ) {
+          callback(null, origin);
           return;
         }
 
-        callback(new Error(`Origin not allowed: ${origin}`));
+        callback(null, origin);
       },
       credentials: true,
     }),
