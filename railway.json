@@ -5,7 +5,7 @@
     "dockerfilePath": "apps/api/Dockerfile"
   },
   "deploy": {
-    "startCommand": "HOST=0.0.0.0 npm run db:deploy && HOST=0.0.0.0 npm run start:api",
+    "startCommand": "npm run db:deploy && npm run start:api",
     "healthcheckPath": "/health",
     "healthcheckTimeout": 100,
     "restartPolicyType": "ON_FAILURE",
