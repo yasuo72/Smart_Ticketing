@@ -5,7 +5,6 @@ import {
   Bot,
   CheckCircle2,
   Clock,
-  RefreshCw,
   TicketCheck,
   TrendingUp,
   Users,
