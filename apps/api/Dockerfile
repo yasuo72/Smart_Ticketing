@@ -19,6 +19,8 @@ COPY apps/api/package.json apps/api/package.json
 RUN npm ci --omit=dev --workspace apps/api
 COPY --from=build /app/apps/api/dist apps/api/dist
 COPY --from=build /app/apps/api/prisma apps/api/prisma
+COPY --from=build /app/apps/api/prisma.config.ts apps/api/prisma.config.ts
+COPY --from=build /app/apps/api/scripts apps/api/scripts
 COPY --from=build /app/apps/api/src/generated apps/api/src/generated
 EXPOSE 4000
 CMD ["npm", "run", "start", "--workspace", "apps/api"]
