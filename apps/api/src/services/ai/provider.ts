@@ -51,60 +51,73 @@ const mockAiProvider: AiProvider = {
 const geminiProvider: AiProvider = {
   async generateText(prompt, options = {}) {
     const apiKey = process.env.GEMINI_API_KEY;
-    const model = process.env.GEMINI_MODEL ?? 'gemini-2.5-flash';
+    let configuredModel = process.env.GEMINI_MODEL ?? 'gemini-1.5-flash';
+    if (configuredModel.includes('2.5')) {
+      configuredModel = 'gemini-1.5-flash';
+    }
 
     if (!apiKey || apiKey.includes('replace-with')) {
       throw new Error('GEMINI_API_KEY is not configured.');
     }
 
-    const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          contents: [
-            {
-              parts: [
+    const tryModels = Array.from(new Set([configuredModel, 'gemini-1.5-flash', 'gemini-2.0-flash']));
+    let lastError: Error | null = null;
+
+    for (const model of tryModels) {
+      try {
+        const response = await fetch(
+          `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              contents: [
                 {
-                  text: prompt,
+                  parts: [
+                    {
+                      text: prompt,
+                    },
+                  ],
                 },
               ],
-            },
-          ],
-          generationConfig: {
-            temperature: options.temperature ?? 0.2,
-            responseMimeType: options.responseMimeType,
+              generationConfig: {
+                temperature: options.temperature ?? 0.2,
+                responseMimeType: options.responseMimeType,
+              },
+            }),
           },
-        }),
-      },
-    );
+        );
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`Gemini request failed: ${response.status} ${errorText}`);
-    }
+        if (!response.ok) {
+          const errorText = await response.text();
+          lastError = new Error(`Gemini request failed (${model}): ${response.status} ${errorText}`);
+          continue;
+        }
 
-    const data = (await response.json()) as {
-      candidates?: Array<{
-        content?: {
-          parts?: Array<{
-            text?: string;
+        const data = (await response.json()) as {
+          candidates?: Array<{
+            content?: {
+              parts?: Array<{
+                text?: string;
+              }>;
+            };
           }>;
         };
-      }>;
-    };
-    const text = data.candidates?.[0]?.content?.parts
-      ?.map((part) => part.text ?? '')
-      .join('')
-      .trim();
+        const text = data.candidates?.[0]?.content?.parts
+          ?.map((part) => part.text ?? '')
+          .join('')
+          .trim();
 
-    if (!text) {
-      throw new Error('Gemini returned an empty response.');
+        if (text) {
+          return text;
+        }
+      } catch (err) {
+        lastError = err instanceof Error ? err : new Error(String(err));
+      }
     }
 
-    return text;
+    throw lastError ?? new Error('Gemini API call failed across all models.');
   },
 };

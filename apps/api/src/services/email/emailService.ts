@@ -44,6 +44,37 @@ export async function sendEmail(input: SendEmailInput) {
   return { skipped: false, id: data?.id ?? null };
 }
 
+export async function sendTicketReplyEmail({
+  customerEmail,
+  ticketSubject,
+  replyBody,
+}: {
+  customerEmail: string;
+  ticketSubject: string;
+  replyBody: string;
+}) {
+  try {
+    await sendEmail({
+      to: customerEmail,
+      subject: `Re: ${ticketSubject}`,
+      text: `${replyBody}\n\nReply to this email or open your support ticket to continue the conversation.`,
+      html: `<p>${escapeHtml(replyBody).replace(/\n/g, '<br>')}</p><p>Reply to this email or open your support ticket to continue the conversation.</p>`,
+      replyTo: process.env.SUPPORT_EMAIL || 'support@rohitis.online',
+    });
+  } catch (error) {
+    console.warn('Ticket reply email skipped:', error instanceof Error ? error.message : error);
+  }
+}
+
+function escapeHtml(value: string) {
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
 export async function retrieveReceivedEmail(emailId: string): Promise<InboundEmail | null> {
   const apiKey = process.env.RESEND_API_KEY;
 
