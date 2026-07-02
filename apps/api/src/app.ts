@@ -12,22 +12,41 @@ import { dashboardRouter } from './routes/dashboard.js';
 import { emailRouter } from './routes/email.js';
 import { ticketsRouter } from './routes/tickets.js';
 
+function getAllowedOrigins() {
+  const configuredOrigins = process.env.WEB_ORIGIN?.split(',').map((origin) => origin.trim()).filter(Boolean) ?? [];
+  const defaults = ['http://localhost:5173', 'http://127.0.0.1:5173', 'http://localhost:5174', 'http://127.0.0.1:5174'];
+
+  return Array.from(new Set([...configuredOrigins, ...defaults]));
+}
+
 export function createApp() {
   const app = express();
-  const webOrigin = process.env.WEB_ORIGIN ?? 'http://localhost:5173';
+  const allowedOrigins = getAllowedOrigins();
 
   app.set('trust proxy', 1);
   app.use(helmet());
   app.use(
     cors({
-      origin: webOrigin,
+      origin: (origin, callback) => {
+        if (!origin) {
+          callback(null, true);
+          return;
+        }
+
+        if (allowedOrigins.includes(origin)) {
+          callback(null, true);
+          return;
+        }
+
+        callback(new Error(`Origin not allowed: ${origin}`));
+      },
       credentials: true,
     }),
   );
   app.use(express.json());
   app.use(sessionMiddleware);
 
-  if (process.env.NODE_ENV !== 'test') {
+  if (process.env.NODE_ENV !== 'production') {
     app.use(morgan('dev'));
   }
 

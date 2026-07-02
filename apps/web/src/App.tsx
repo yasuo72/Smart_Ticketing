@@ -99,8 +99,11 @@ export function App() {
       });
 
       if (response.ok) {
-        const data = (await response.json()) as { user: AuthUser };
-        setCurrentUser(data.user);
+        const data = (await response.json()) as { user: AuthUser | null };
+
+        if (data.user) {
+          setCurrentUser(data.user);
+        }
       }
     }
 

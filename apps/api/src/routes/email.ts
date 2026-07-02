@@ -51,50 +51,28 @@ emailRouter.post('/inbound/resend', async (request, response, next) => {
         role: Role.CUSTOMER,
       },
     });
-    let ticket = await prisma.ticket.create({
+    const ticket = await prisma.ticket.create({
       data: {
         subject: inboundEmail.subject,
         description: inboundEmail.text,
         customerId: customer.id,
-        replies: {
-          create: {
-            authorId: customer.id,
-            body: inboundEmail.text,
-          },
-        },
-        auditEvents: {
-          create: {
-            actorId: customer.id,
-            action: 'ticket.created_from_email',
-          },
-        },
-      },
-      include: {
-        customer: true,
-        agent: true,
-        replies: {
-          where: {
-            isInternal: false,
-          },
-          orderBy: {
-            createdAt: 'asc',
-          },
-          include: {
-            author: true,
-          },
-        },
-        auditEvents: {
-          orderBy: {
-            createdAt: 'asc',
-          },
-        },
       },
     });
-    const enrichedTicket = await enrichTicketWithAi(ticket.id, ticket.subject, ticket.description);
-
-    if (enrichedTicket) {
-      ticket = enrichedTicket;
-    }
+    await prisma.reply.create({
+      data: {
+        ticketId: ticket.id,
+        authorId: customer.id,
+        body: inboundEmail.text,
+      },
+    });
+    await prisma.auditEvent.create({
+      data: {
+        ticketId: ticket.id,
+        actorId: customer.id,
+        action: 'ticket.created_from_email',
+      },
+    });
+    void enrichTicketWithAi(ticket.id, ticket.subject, ticket.description);
 
     response.status(201).json({
       ticketId: ticket.id,

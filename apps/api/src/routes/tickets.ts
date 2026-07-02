@@ -100,33 +100,37 @@ ticketsRouter.post('/', async (request, response, next) => {
     const input = createTicketSchema.parse(request.body);
     const user = request.currentUser!;
 
-    let ticket = await prisma.ticket.create({
+    const createdTicket = await prisma.ticket.create({
       data: {
         subject: input.subject,
         description: input.description,
         priority: input.priority ?? Priority.MEDIUM,
         customerId: user.id,
-        replies: {
-          create: {
-            authorId: user.id,
-            body: input.description,
-          },
-        },
-        auditEvents: {
-          create: {
-            actorId: user.id,
-            action: 'ticket.created',
-            toValue: TicketStatus.OPEN,
-          },
-        },
       },
-      include: ticketInclude(false),
     });
-    const enrichedTicket = await enrichTicketWithAi(ticket.id, ticket.subject, ticket.description);
+    await prisma.reply.create({
+      data: {
+        ticketId: createdTicket.id,
+        authorId: user.id,
+        body: input.description,
+      },
+    });
+    await prisma.auditEvent.create({
+      data: {
+        ticketId: createdTicket.id,
+        actorId: user.id,
+        action: 'ticket.created',
+        toValue: TicketStatus.OPEN,
+      },
+    });
+    const ticket = await findVisibleTicket(createdTicket.id, user.id, false);
 
-    if (enrichedTicket) {
-      ticket = enrichedTicket;
+    if (!ticket) {
+      response.status(500).json({ error: 'Ticket was created but could not be loaded.' });
+      return;
     }
+
+    void enrichTicketWithAi(ticket.id, ticket.subject, ticket.description);
 
     response.status(201).json({ ticket: serializeTicket(ticket, false) });
   } catch (error) {
@@ -179,32 +183,31 @@ ticketsRouter.patch('/:id', async (request, response, next) => {
     const data = buildTicketUpdateData(input, existing, user.id, isStaff);
     const auditEvents = buildAuditEvents(existing, data, user.id);
 
-    let ticket = await prisma.ticket.update({
+    await prisma.ticket.update({
       where: {
         id: existing.id,
       },
-      data: {
-        ...data,
-        auditEvents:
-          auditEvents.length > 0
-            ? {
-                create: auditEvents,
-              }
-            : undefined,
-      },
-      include: ticketInclude(isStaff),
+      data,
     });
 
-    if (input.subject || input.description) {
-      const enrichedTicket = await enrichTicketWithAi(
-        ticket.id,
-        ticket.subject,
-        ticket.description,
-      );
+    for (const auditEvent of auditEvents) {
+      await prisma.auditEvent.create({
+        data: {
+          ticketId: existing.id,
+          ...auditEvent,
+        },
+      });
+    }
 
-      if (enrichedTicket) {
-        ticket = enrichedTicket;
-      }
+    const ticket = await findVisibleTicket(existing.id, user.id, isStaff);
+
+    if (!ticket) {
+      response.status(500).json({ error: 'Ticket was updated but could not be loaded.' });
+      return;
+    }
+
+    if (input.subject || input.description) {
+      void enrichTicketWithAi(ticket.id, ticket.subject, ticket.description);
     }
 
     response.json({ ticket: serializeTicket(ticket, isStaff) });
@@ -239,34 +242,41 @@ ticketsRouter.post('/:id/replies', async (request, response, next) => {
       return;
     }
 
-    const ticket = await prisma.ticket.update({
-      where: {
-        id: existing.id,
-      },
-      data: {
-        status:
-          isStaff && existing.status === TicketStatus.OPEN ? TicketStatus.IN_PROGRESS : undefined,
-        replies: {
-          create: {
-            authorId: user.id,
-            body: input.body,
-            isInternal: isStaff ? (input.isInternal ?? false) : false,
-          },
+    if (isStaff && existing.status === TicketStatus.OPEN) {
+      await prisma.ticket.update({
+        where: {
+          id: existing.id,
         },
-        auditEvents:
-          isStaff && existing.status === TicketStatus.OPEN
-            ? {
-                create: {
-                  actorId: user.id,
-                  action: 'ticket.status_changed',
-                  fromValue: existing.status,
-                  toValue: TicketStatus.IN_PROGRESS,
-                },
-              }
-            : undefined,
+        data: {
+          status: TicketStatus.IN_PROGRESS,
+        },
+      });
+      await prisma.auditEvent.create({
+        data: {
+          ticketId: existing.id,
+          actorId: user.id,
+          action: 'ticket.status_changed',
+          fromValue: existing.status,
+          toValue: TicketStatus.IN_PROGRESS,
+        },
+      });
+    }
+
+    await prisma.reply.create({
+      data: {
+        ticketId: existing.id,
+        authorId: user.id,
+        body: input.body,
+        isInternal: isStaff ? (input.isInternal ?? false) : false,
       },
-      include: ticketInclude(isStaff),
     });
+
+    const ticket = await findVisibleTicket(existing.id, user.id, isStaff);
+
+    if (!ticket) {
+      response.status(500).json({ error: 'Reply was created but ticket could not be loaded.' });
+      return;
+    }
 
     if (isStaff && !input.isInternal) {
       await sendTicketReplyEmail({

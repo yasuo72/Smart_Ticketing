@@ -8,66 +8,63 @@ export const dashboardRouter = Router();
 dashboardRouter.use(requireAuth, requireRole(Role.AGENT, Role.ADMIN));
 
 dashboardRouter.get('/', async (_request, response) => {
-  const [statusCounts, priorityCounts, categoryCounts, resolutionTickets, recentActivity] =
-    await Promise.all([
-      prisma.ticket.groupBy({
-        by: ['status'],
-        _count: {
-          status: true,
-        },
-      }),
-      prisma.ticket.groupBy({
-        by: ['priority'],
-        _count: {
-          priority: true,
-        },
-      }),
-      prisma.ticket.groupBy({
-        by: ['category'],
-        _count: {
-          category: true,
-        },
-        where: {
-          category: {
-            not: null,
-          },
-        },
-      }),
-      prisma.ticket.findMany({
-        where: {
-          resolvedAt: {
-            not: null,
-          },
-        },
+  const statusCounts = await prisma.ticket.groupBy({
+    by: ['status'],
+    _count: {
+      status: true,
+    },
+  });
+  const priorityCounts = await prisma.ticket.groupBy({
+    by: ['priority'],
+    _count: {
+      priority: true,
+    },
+  });
+  const categoryCounts = await prisma.ticket.groupBy({
+    by: ['category'],
+    _count: {
+      category: true,
+    },
+    where: {
+      category: {
+        not: null,
+      },
+    },
+  });
+  const resolutionTickets = await prisma.ticket.findMany({
+    where: {
+      resolvedAt: {
+        not: null,
+      },
+    },
+    select: {
+      createdAt: true,
+      resolvedAt: true,
+      status: true,
+    },
+  });
+  const recentActivity = await prisma.auditEvent.findMany({
+    take: 12,
+    orderBy: {
+      createdAt: 'desc',
+    },
+    include: {
+      ticket: {
         select: {
-          createdAt: true,
-          resolvedAt: true,
-          status: true,
+          id: true,
+          subject: true,
         },
-      }),
-      prisma.auditEvent.findMany({
-        take: 12,
-        orderBy: {
-          createdAt: 'desc',
+      },
+      actor: {
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          role: true,
         },
-        include: {
-          ticket: {
-            select: {
-              id: true,
-              subject: true,
-            },
-          },
-          actor: {
-            select: {
-              id: true,
-              name: true,
-              email: true,
-              role: true,
-            },
-          },
-        },
-      }),
-    ]);
+      },
+    },
+  });
 
   const resolvedDurations = resolutionTickets
     .filter((ticket) => ticket.resolvedAt)

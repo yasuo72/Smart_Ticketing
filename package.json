@@ -20,6 +20,7 @@
     "test:e2e": "playwright test",
     "test:all": "npm run test && npm run test:e2e",
     "db:deploy": "npm run db:deploy --workspace apps/api",
+    "test:email": "powershell -File scripts/send-test-email.ps1",
     "lint": "eslint .",
     "format": "prettier --write .",
     "format:check": "prettier --check ."

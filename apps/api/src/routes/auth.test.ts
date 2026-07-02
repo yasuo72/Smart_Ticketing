@@ -80,6 +80,16 @@ describe('auth flow', () => {
     expect(meResponse.body.user.email).toBe(email);
   });
 
+  it('accepts preflight requests from local frontend origins', async () => {
+    const response = await request(app)
+      .options('/api/auth/me')
+      .set('Origin', 'http://localhost:5174')
+      .set('Access-Control-Request-Method', 'GET');
+
+    expect(response.status).toBe(204);
+    expect(response.headers['access-control-allow-origin']).toBe('http://localhost:5174');
+  });
+
   it('rejects duplicate signups', async () => {
     const email = `${testRunId}-duplicate@test.local`;
 

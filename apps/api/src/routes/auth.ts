@@ -1,12 +1,13 @@
 import { Router, type ErrorRequestHandler } from 'express';
 import { ZodError } from 'zod';
-import { requireAuth } from '../middleware/auth.js';
+import { prisma } from '../lib/prisma.js';
 import {
   AuthError,
   authenticateUser,
   createCustomerAccount,
   loginSchema,
   signupSchema,
+  toSafeUser,
 } from '../services/auth.js';
 
 export const authRouter = Router();
@@ -46,8 +47,31 @@ authRouter.post('/logout', (request, response) => {
   response.status(204).send();
 });
 
-authRouter.get('/me', requireAuth, (request, response) => {
-  response.json({ user: request.currentUser });
+authRouter.get('/me', async (request, response, next) => {
+  try {
+    const userId = request.session?.userId;
+
+    if (typeof userId !== 'string') {
+      response.json({ user: null });
+      return;
+    }
+
+    const user = await prisma.user.findUnique({
+      where: {
+        id: userId,
+      },
+    });
+
+    if (!user || !user.isActive) {
+      request.session = null;
+      response.json({ user: null });
+      return;
+    }
+
+    response.json({ user: toSafeUser(user) });
+  } catch (error) {
+    next(error);
+  }
 });
 
 const authErrorHandler: ErrorRequestHandler = (error, _request, response, _next) => {
