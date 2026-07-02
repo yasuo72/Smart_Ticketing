@@ -191,6 +191,13 @@ describe('ticket management', () => {
   });
 
   it('lets agents filter by status and priority', async () => {
+    await prisma.ticket.deleteMany({
+      where: {
+        status: TicketStatus.OPEN,
+        priority: Priority.URGENT,
+      },
+    });
+
     const customer = await createUser({ email: `${testRunId}-filter-customer@test.local` });
     const agentUser = await createUser({
       email: `${testRunId}-filter-agent@test.local`,
