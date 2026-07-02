@@ -191,12 +191,12 @@ const inboundWebhookHandler = async (
     // Strip leading "Re:", "Fwd:" to match ongoing conversation threads
     const cleanSubject = inboundEmail.subject.replace(/^(re|fwd):\s*/i, '').trim();
 
-    // Check if customer already has an active open ticket with matching subject
+    // Check if customer already has an active ticket with matching subject
     const existingTicket = await prisma.ticket.findFirst({
       where: {
         customerId: customer.id,
         status: {
-          in: [TicketStatus.OPEN, TicketStatus.IN_PROGRESS],
+          in: [TicketStatus.OPEN, TicketStatus.IN_PROGRESS, TicketStatus.AUTO_RESOLVED],
         },
         subject: {
           contains: cleanSubject.length > 5 ? cleanSubject : inboundEmail.subject,
@@ -217,9 +217,13 @@ const inboundWebhookHandler = async (
         },
       });
 
+      // Reopen ticket to IN_PROGRESS if it was AUTO_RESOLVED or update timestamp
       await prisma.ticket.update({
         where: { id: existingTicket.id },
-        data: { updatedAt: new Date() },
+        data: {
+          status: TicketStatus.IN_PROGRESS,
+          updatedAt: new Date(),
+        },
       });
 
       await prisma.auditEvent.create({
