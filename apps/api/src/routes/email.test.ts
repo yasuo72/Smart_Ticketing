@@ -133,6 +133,31 @@ describe('email integration', () => {
     expect(ticket?.replies[1]?.body).toBe('Adding more details from mobile app.');
   });
 
+  it('handles Resend email_id payloads and creates a ticket even when body is omitted', async () => {
+    const response = await request(app)
+      .post('/api/email/inbound/resend')
+      .send({
+        created_at: '2026-07-02T20:44:11.000Z',
+        data: {
+          attachments: [],
+          bcc: [],
+          cc: [],
+          created_at: '2026-07-02T20:44:25.225Z',
+          email_id: '32b8b445-6584-4708-9d54-dc4b6fa69616',
+          from: `${testRunId}-parul@test.local`,
+          message_id: '<test-message-id@mail.gmail.com>',
+          received_for: ['support@rohitis.online'],
+          subject: 'Re: Hey',
+          to: ['support@rohitis.online'],
+        },
+        type: 'email.received',
+      });
+
+    expect(response.status).toBe(201);
+    expect(response.body.action).toBe('created');
+    expect(response.body.ticketId).toEqual(expect.any(String));
+  });
+
   it('returns accepted when Resend metadata has no retrievable body in local config', async () => {
     const response = await request(app)
       .post('/api/email/inbound/resend')

@@ -84,10 +84,24 @@ async function handleInboundEmail(payload: unknown): Promise<InboundFields | nul
     }
   }
 
-  // Fallback for Resend receiving email by ID if body is not directly included
-  const emailId = data.id ?? body.id ?? body.email_id;
+  // Fallback for Resend receiving email by ID (checking data.email_id, data.id, body.email_id, body.id)
+  const emailId = data.email_id ?? data.id ?? body.email_id ?? body.id;
   if (typeof emailId === 'string' && emailId) {
-    return retrieveReceivedEmail(emailId);
+    const fetched = await retrieveReceivedEmail(emailId);
+    if (fetched && fetched.from && (fetched.text || fetched.html)) {
+      return fetched;
+    }
+  }
+
+  // Safe Fallback: If senderEmail is known from payload (e.g. data.from), create ticket even if body was omitted in webhook
+  if (senderEmail && senderEmail.includes('@')) {
+    const subjectStr = typeof rawSubject === 'string' && rawSubject.trim() ? rawSubject.trim() : 'Support Request';
+    return {
+      from: senderEmail,
+      subject: subjectStr,
+      text: subjectStr,
+      html: null,
+    };
   }
 
   return null;

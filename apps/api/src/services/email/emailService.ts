@@ -47,37 +47,49 @@ export async function sendEmail(input: SendEmailInput) {
 export async function retrieveReceivedEmail(emailId: string): Promise<InboundEmail | null> {
   const apiKey = process.env.RESEND_API_KEY;
 
-  if (process.env.NODE_ENV === 'test' || !apiKey || apiKey.includes('replace-with')) {
+  if (!apiKey || apiKey.includes('replace-with')) {
     return null;
   }
 
-  const response = await fetch(`https://api.resend.com/emails/receiving/${emailId}`, {
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-    },
-  });
+  try {
+    let response = await fetch(`https://api.resend.com/emails/receiving/${emailId}`, {
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+      },
+    });
 
-  if (!response.ok) {
-    throw new Error(`Received email retrieval failed: ${response.status} ${await response.text()}`);
-  }
+    if (!response.ok) {
+      response = await fetch(`https://api.resend.com/emails/${emailId}`, {
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+        },
+      });
+    }
 
-  const data = (await response.json()) as {
-    from?: string;
-    subject?: string;
-    text?: string | null;
-    html?: string | null;
-  };
+    if (!response.ok) {
+      console.warn(`Received email retrieval status: ${response.status}`);
+      return null;
+    }
 
-  if (!data.from || !data.subject || (!data.text && !data.html)) {
+    const data = (await response.json()) as {
+      from?: unknown;
+      subject?: string;
+      text?: string | null;
+      html?: string | null;
+    };
+
+    const fromStr = extractEmailAddress(data.from);
+
+    return {
+      from: fromStr,
+      subject: data.subject ?? 'Support Request',
+      text: data.text ?? (data.html ? stripHtml(data.html) : ''),
+      html: data.html,
+    };
+  } catch (err) {
+    console.warn('Failed to retrieve email content from Resend:', err);
     return null;
   }
-
-  return {
-    from: data.from,
-    subject: data.subject,
-    text: data.text ?? stripHtml(data.html ?? ''),
-    html: data.html,
-  };
 }
 
 export function stripHtml(html: string) {
