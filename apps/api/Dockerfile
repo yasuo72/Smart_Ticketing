@@ -25,4 +25,4 @@ COPY --from=build /app/apps/api/prisma.config.ts apps/api/prisma.config.ts
 COPY --from=build /app/apps/api/scripts apps/api/scripts
 COPY --from=build /app/apps/api/src/generated apps/api/src/generated
 EXPOSE 4000
-CMD ["npm", "run", "start", "--workspace", "apps/api"]
+CMD ["sh", "-c", "npm run db:deploy && npm run start:api"]
