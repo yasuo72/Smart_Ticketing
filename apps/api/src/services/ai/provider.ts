@@ -54,7 +54,7 @@ const geminiProvider: AiProvider = {
   async generateText(prompt, options = {}) {
     const apiKey = process.env.GEMINI_API_KEY;
     let configuredModel = process.env.GEMINI_MODEL ?? 'gemini-1.5-flash';
-    if (configuredModel.includes('2.5')) {
+    if (configuredModel.includes('2.5') || configuredModel.includes('2.0') || configuredModel.includes('lite')) {
       configuredModel = 'gemini-1.5-flash';
     }
 

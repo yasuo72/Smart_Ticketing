@@ -107,12 +107,48 @@ async function handleInboundEmail(payload: unknown): Promise<InboundFields | nul
   return null;
 }
 
+const processedWebhookIds = new Set<string>();
+const MAX_PROCESSED_IDS = 1000;
+
+function isDuplicateWebhook(id: unknown): boolean {
+  if (typeof id !== 'string' || !id) return false;
+  if (processedWebhookIds.has(id)) return true;
+  if (processedWebhookIds.size >= MAX_PROCESSED_IDS) {
+    const firstKey = processedWebhookIds.values().next().value;
+    if (firstKey) processedWebhookIds.delete(firstKey);
+  }
+  processedWebhookIds.add(id);
+  return false;
+}
+
 const inboundWebhookHandler = async (
   request: import('express').Request,
   response: import('express').Response,
   next: import('express').NextFunction,
 ) => {
   try {
+    const payload = request.body || {};
+    const eventType = payload.type || payload.event || payload.event_type;
+
+    // Ignore webhook events that are not inbound email received (e.g. email.sent, email.delivered, email.opened)
+    if (typeof eventType === 'string' && eventType && !eventType.includes('received') && !eventType.includes('inbound')) {
+      response.status(200).json({
+        skipped: true,
+        reason: `Ignored webhook event type '${eventType}'. Only email.received is processed.`,
+      });
+      return;
+    }
+
+    // Deduplicate duplicate webhook deliveries (e.g. Sender.net msg_... or email_id)
+    const eventId = payload.id || payload.data?.id || payload.data?.email_id || payload.data?.message_id;
+    if (eventId && isDuplicateWebhook(eventId)) {
+      response.status(200).json({
+        skipped: true,
+        reason: `Duplicate webhook event '${eventId}' ignored.`,
+      });
+      return;
+    }
+
     const inboundEmail = await handleInboundEmail(request.body);
 
     if (!inboundEmail || !inboundEmail.from || !inboundEmail.from.includes('@')) {
@@ -124,6 +160,21 @@ const inboundWebhookHandler = async (
     }
 
     const senderEmail = extractEmailAddress(inboundEmail.from);
+    const supportEmail = (process.env.SUPPORT_EMAIL || 'support@rohitis.online').toLowerCase().trim();
+
+    // Prevent infinite email loops: Ignore emails sent from our own support address or no-reply addresses
+    if (
+      senderEmail.toLowerCase() === supportEmail ||
+      senderEmail.toLowerCase().includes('no-reply') ||
+      senderEmail.toLowerCase().includes('noreply') ||
+      senderEmail.toLowerCase().includes('ai-assistant')
+    ) {
+      response.status(200).json({
+        skipped: true,
+        reason: `Ignored email sent from support address or automated sender (${senderEmail}).`,
+      });
+      return;
+    }
     const customer = await prisma.user.upsert({
       where: {
         email: senderEmail,
