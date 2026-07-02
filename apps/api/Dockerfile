@@ -14,6 +14,8 @@ RUN npm run build:api
 
 FROM base AS runner
 ENV NODE_ENV=production
+ENV HOST=0.0.0.0
+ENV PORT=4000
 COPY package.json package-lock.json ./
 COPY apps/api/package.json apps/api/package.json
 RUN npm ci --omit=dev --workspace apps/api
