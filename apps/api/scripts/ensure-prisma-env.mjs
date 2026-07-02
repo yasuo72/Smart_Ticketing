@@ -25,7 +25,10 @@ function parseEnvFile(filePath) {
 
       const key = trimmed.slice(0, separatorIndex).trim();
       let value = trimmed.slice(separatorIndex + 1).trim();
-      if ((value.startsWith('"') && value.endsWith('"')) || (value.startsWith("'") && value.endsWith("'"))) {
+      if (
+        (value.startsWith('"') && value.endsWith('"')) ||
+        (value.startsWith("'") && value.endsWith("'"))
+      ) {
         value = value.slice(1, -1);
       }
       acc[key] = value;

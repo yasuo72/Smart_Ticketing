@@ -7,8 +7,19 @@ import { defineConfig } from 'prisma/config';
 
 config({ path: resolve(dirname(fileURLToPath(import.meta.url)), '.env') });
 
-const { DATABASE_URL, POSTGRES_URL, POSTGRES_PRISMA_URL, PRIVATE_DATABASE_URL, RAILWAY_DATABASE_URL } = process.env;
-const resolvedUrl = DATABASE_URL || POSTGRES_URL || POSTGRES_PRISMA_URL || PRIVATE_DATABASE_URL || RAILWAY_DATABASE_URL;
+const {
+  DATABASE_URL,
+  POSTGRES_URL,
+  POSTGRES_PRISMA_URL,
+  PRIVATE_DATABASE_URL,
+  RAILWAY_DATABASE_URL,
+} = process.env;
+const resolvedUrl =
+  DATABASE_URL ||
+  POSTGRES_URL ||
+  POSTGRES_PRISMA_URL ||
+  PRIVATE_DATABASE_URL ||
+  RAILWAY_DATABASE_URL;
 
 if (resolvedUrl) {
   process.env.DATABASE_URL = resolvedUrl;
