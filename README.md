@@ -210,8 +210,10 @@ SUPPORT_EMAIL=your-test-email
 Railway starts the API with:
 
 ```bash
-npm run db:deploy --workspace apps/api && npm run start --workspace apps/api
+sh ./apps/api/scripts/start-prod.sh
 ```
+
+That script runs `prisma migrate deploy`, then starts the compiled API on Railway's `PORT`.
 
 Frontend deployment:
 
