@@ -1,0 +1,123 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    name: Build, lint, and test
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: ai_ticketing_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d ai_ticketing_test"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/ai_ticketing_test?schema=public
+      SESSION_SECRET: ci-session-secret
+      WEB_ORIGIN: http://127.0.0.1:5174
+      AI_PROVIDER: mock
+      GEMINI_API_KEY: replace-with-ci-disabled
+      RESEND_API_KEY: replace-with-ci-disabled
+      RESEND_FROM_EMAIL: AI Ticketing <onboarding@resend.dev>
+      SUPPORT_EMAIL: test@example.com
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate Prisma client
+        run: npm run db:generate --workspace apps/api
+
+      - name: Apply database migrations
+        run: npm run db:deploy --workspace apps/api
+
+      - name: Check formatting
+        run: npm run format:check
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Unit and integration tests
+        run: npm run test
+
+      - name: Build
+        run: npm run build
+
+  e2e:
+    name: Browser E2E
+    runs-on: ubuntu-latest
+    needs: test
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: ai_ticketing_e2e
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d ai_ticketing_e2e"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/ai_ticketing_e2e?schema=public
+      SESSION_SECRET: ci-session-secret
+      WEB_ORIGIN: http://127.0.0.1:5174
+      AI_PROVIDER: mock
+      GEMINI_API_KEY: replace-with-ci-disabled
+      RESEND_API_KEY: replace-with-ci-disabled
+      RESEND_FROM_EMAIL: AI Ticketing <onboarding@resend.dev>
+      SUPPORT_EMAIL: test@example.com
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Generate Prisma client
+        run: npm run db:generate --workspace apps/api
+
+      - name: Apply database migrations
+        run: npm run db:deploy --workspace apps/api
+
+      - name: E2E tests
+        run: npm run test:e2e

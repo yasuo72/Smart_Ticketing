@@ -184,6 +184,49 @@ npm run test:all
 
 Playwright uses ports `4100` and `5174` with mock AI and disabled email sends, so it does not consume Gemini or Resend quota.
 
+## Phase 10 Deployment
+
+CI runs through GitHub Actions on push and pull request to `main`.
+
+Railway backend deployment:
+
+1. Create a Railway project from the GitHub repo.
+2. Add a PostgreSQL database in Railway.
+3. Set the API service to use the root repository with `railway.json`.
+4. Add environment variables:
+
+```bash
+DATABASE_URL=your-railway-postgres-url
+SESSION_SECRET=a-long-random-production-secret
+WEB_ORIGIN=https://your-frontend-url
+AI_PROVIDER=gemini
+GEMINI_API_KEY=your-gemini-key
+GEMINI_MODEL=gemini-2.5-flash
+RESEND_API_KEY=your-resend-key
+RESEND_FROM_EMAIL="AI Ticketing <onboarding@resend.dev>"
+SUPPORT_EMAIL=your-test-email
+```
+
+Railway starts the API with:
+
+```bash
+npm run db:deploy --workspace apps/api && npm run start --workspace apps/api
+```
+
+Frontend deployment:
+
+Use Vercel with the project root set to the repository root. The root `vercel.json` runs `npm run build:web` and publishes `apps/web/dist`. Set:
+
+```bash
+VITE_API_URL=https://your-railway-api-url
+```
+
+Production notes:
+
+- Never commit `.env`.
+- Use `prisma migrate deploy` in production, not `prisma migrate dev`.
+- Railway/Vercel environment variables replace local `.env` files.
+
 ## Current Status
 
 Phase 1 scaffolding is complete. Database, auth, tickets, AI, email, and deployment will be added in later phases.
