@@ -39,25 +39,26 @@ test('customer can sign up, create a ticket, and see it in their queue', async (
   const subject = `${testRunId} customer ticket`;
 
   await page.goto('/');
-  await page.getByRole('button', { name: 'Sign up' }).click();
-  await page.getByLabel('Name').fill('E2E Customer');
-  await page.getByLabel('Email').fill(email);
+  await page.getByRole('button', { name: 'Sign Up', exact: true }).click();
+  await page.getByLabel('Full Name').fill('E2E Customer');
+  await page.getByLabel('Email Address').fill(email);
   await page.getByLabel('Password').fill('Password123!');
-  await page.getByRole('button', { name: 'Create account' }).click();
+  await page.getByRole('button', { name: 'Create Account' }).click();
 
-  await expect(page.getByText(email)).toBeVisible();
-  await page.getByTestId('create-ticket-form').getByLabel('Subject').fill(subject);
+  await expect(page.getByText('E2E Customer')).toBeVisible();
+  await page.getByRole('button', { name: 'New', exact: true }).click();
+  await page.getByTestId('create-ticket-form').getByPlaceholder('Subject').fill(subject);
   await page
     .getByTestId('create-ticket-form')
-    .getByLabel('Description')
+    .getByPlaceholder('Describe your issue...')
     .fill('The customer portal will not load after sign in.');
   await page
     .getByTestId('create-ticket-form')
-    .getByRole('button', { name: 'Create ticket' })
+    .getByRole('button', { name: 'Submit Ticket' })
     .click();
 
-  await expect(page.getByTestId('ticket-list').getByText(subject)).toBeVisible();
-  await expect(page.getByTestId('ticket-detail').getByText(subject)).toBeVisible();
+  await expect(page.getByTestId('ticket-list').getByText(subject).first()).toBeVisible();
+  await expect(page.getByTestId('ticket-detail').getByText(subject).first()).toBeVisible();
 });
 
 test('agent can assign, polish, reply, and resolve a customer ticket', async ({ page }) => {
@@ -80,26 +81,27 @@ test('agent can assign, polish, reply, and resolve a customer ticket', async ({ 
   );
 
   await page.goto('/');
-  await page.getByLabel('Email').fill(agentEmail);
+  await page.getByLabel('Email Address').fill(agentEmail);
   await page.getByLabel('Password').fill('Password123!');
-  await page.getByTestId('auth-form').getByRole('button', { name: 'Login' }).click();
+  await page.getByTestId('auth-form').getByRole('button', { name: 'Sign In' }).click();
 
-  await expect(page.getByText(agentEmail)).toBeVisible();
+  await expect(page.getByText('E2E Agent')).toBeVisible();
+  await page.getByRole('button', { name: 'Tickets', exact: true }).click();
   await page.getByTestId('ticket-list').getByText(subject).click();
   await page.getByRole('button', { name: 'Assign to me' }).click();
   await expect(page.getByTestId('ticket-detail').getByText('E2E Agent')).toBeVisible();
 
-  await page.getByTestId('reply-form').getByLabel('Reply').fill('we are checking this soon');
-  await page.getByRole('button', { name: 'Polish' }).click();
-  await expect(page.getByText('Polished reply')).toBeVisible();
-  await page.getByRole('button', { name: 'Use polished' }).click();
-  await page.getByRole('button', { name: 'Send reply' }).click();
+  await page.getByTestId('reply-form').getByPlaceholder('Write your reply...').fill('we are checking this soon');
+  await page.getByRole('button', { name: 'Polish with AI' }).click();
+  await expect(page.getByText('AI Polished Reply')).toBeVisible();
+  await page.getByRole('button', { name: 'Use this →' }).click();
+  await page.getByRole('button', { name: 'Send Reply' }).click();
 
   await expect(
     page.getByTestId('ticket-detail').getByText('Thanks for reaching out'),
   ).toBeVisible();
-  await page.getByTestId('ticket-detail').getByLabel('Status').selectOption('RESOLVED');
-  await expect(page.getByTestId('ticket-detail').getByLabel('Status')).toHaveValue('RESOLVED');
+  await page.getByTestId('ticket-detail').locator('select').first().selectOption('RESOLVED');
+  await expect(page.getByTestId('ticket-detail').locator('select').first()).toHaveValue('RESOLVED');
 });
 
 test('admin sees dashboard metrics and user management', async ({ page }) => {
@@ -108,12 +110,13 @@ test('admin sees dashboard metrics and user management', async ({ page }) => {
   await createUser(adminEmail, 'E2E Admin', 'ADMIN');
 
   await page.goto('/');
-  await page.getByLabel('Email').fill(adminEmail);
+  await page.getByLabel('Email Address').fill(adminEmail);
   await page.getByLabel('Password').fill('Password123!');
-  await page.getByTestId('auth-form').getByRole('button', { name: 'Login' }).click();
+  await page.getByTestId('auth-form').getByRole('button', { name: 'Sign In' }).click();
 
-  await expect(page.getByRole('heading', { name: 'Dashboard', exact: true })).toBeVisible();
-  await expect(page.getByRole('heading', { name: 'Users', exact: true })).toBeVisible();
+  await expect(page.locator('h1').filter({ hasText: 'Dashboard' })).toBeVisible();
+  await page.getByRole('button', { name: 'Users' }).click();
+  await expect(page.locator('h1').filter({ hasText: 'Users' })).toBeVisible();
 });
 
 async function createUser(email: string, name: string, role: 'CUSTOMER' | 'AGENT' | 'ADMIN') {

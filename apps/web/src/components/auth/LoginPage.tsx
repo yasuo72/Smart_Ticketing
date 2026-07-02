@@ -219,12 +219,13 @@ export function LoginPage({ onLogin }: Props) {
             <form onSubmit={handleSubmit} data-testid="auth-form" className="space-y-4">
               {mode === 'signup' && (
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                  <label htmlFor="name" className="block text-sm font-medium text-slate-700 mb-1.5">
                     Full Name
                   </label>
                   <div className="relative">
                     <User className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-400" />
                     <input
+                      id="name"
                       required
                       type="text"
                       autoComplete="name"
@@ -238,12 +239,13 @@ export function LoginPage({ onLogin }: Props) {
               )}
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                <label htmlFor="email" className="block text-sm font-medium text-slate-700 mb-1.5">
                   Email Address
                 </label>
                 <div className="relative">
                   <Mail className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-400" />
                   <input
+                    id="email"
                     required
                     type="email"
                     autoComplete="email"
@@ -256,10 +258,11 @@ export function LoginPage({ onLogin }: Props) {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1.5">Password</label>
+                <label htmlFor="password" className="block text-sm font-medium text-slate-700 mb-1.5">Password</label>
                 <div className="relative">
                   <Lock className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-400" />
                   <input
+                    id="password"
                     required
                     type="password"
                     autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
