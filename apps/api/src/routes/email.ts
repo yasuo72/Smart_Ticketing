@@ -22,7 +22,8 @@ async function handleInboundEmail(payload: unknown): Promise<InboundFields | nul
     return null;
   }
 
-  const body = payload as Record<string, unknown>;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const body = payload as any;
   const data = body.data && typeof body.data === 'object' ? body.data : {};
 
   // Resolve raw sender field
