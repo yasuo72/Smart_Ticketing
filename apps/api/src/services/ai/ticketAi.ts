@@ -160,16 +160,35 @@ export async function classifyTicket(
 }
 
 export async function polishReply(draft: string) {
-  const prompt = `POLISH_REPLY
+  try {
+    const prompt = `POLISH_REPLY
 Rewrite this support-agent reply to be clearer, warmer, and more professional.
 Keep the meaning the same. Do not add promises, discounts, policies, or facts that are not present.
 
 Draft:
 ${draft}`;
 
-  return getAiProvider().generateText(prompt, {
-    temperature: 0.3,
-  });
+    return await getAiProvider().generateText(prompt, {
+      temperature: 0.3,
+    });
+  } catch (error) {
+    console.warn('AI API call failed during polishReply, applying fallback polish:', error instanceof Error ? error.message : error);
+    return fallbackPolishReply(draft);
+  }
+}
+
+function fallbackPolishReply(draft: string): string {
+  const trimmed = draft.trim();
+  if (!trimmed) return draft;
+
+  let polished = trimmed;
+  if (!/^(hello|hi|dear|thanks)/i.test(polished)) {
+    polished = `Hello,\n\n${polished}`;
+  }
+  if (!/(thanks|regards|support|team)/i.test(polished)) {
+    polished = `${polished}\n\nBest regards,\nSupport Team`;
+  }
+  return polished;
 }
 
 export async function enrichTicketWithAi(ticketId: string, subject: string, description: string) {
