@@ -89,8 +89,25 @@ export function stripHtml(html: string) {
     .trim();
 }
 
-export function extractEmailAddress(value: string) {
-  const match = value.match(/<([^>]+)>/);
+export function extractEmailAddress(value: unknown): string {
+  if (!value) return '';
 
-  return (match?.[1] ?? value).trim().toLowerCase();
+  if (typeof value === 'string') {
+    const match = value.match(/<([^>]+)>/);
+    return (match?.[1] ?? value).trim().toLowerCase();
+  }
+
+  if (Array.isArray(value) && value.length > 0) {
+    return extractEmailAddress(value[0]);
+  }
+
+  if (typeof value === 'object' && value !== null) {
+    const obj = value as Record<string, unknown>;
+    const raw = obj.email ?? obj.address ?? obj.value ?? obj.from;
+    if (raw) {
+      return extractEmailAddress(raw);
+    }
+  }
+
+  return String(value).trim().toLowerCase();
 }

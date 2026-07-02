@@ -1,6 +1,5 @@
 import { Router, type ErrorRequestHandler } from 'express';
-import { z, ZodError } from 'zod';
-import { Role } from '../generated/prisma/client.js';
+import { Role, TicketStatus } from '../generated/prisma/client.js';
 import { prisma } from '../lib/prisma.js';
 import { enrichTicketWithAi } from '../services/ai/ticketAi.js';
 import {
@@ -11,30 +10,102 @@ import {
 
 export const emailRouter = Router();
 
-const inboundWebhookSchema = z.object({
-  type: z.string().optional(),
-  data: z
-    .object({
-      id: z.string().optional(),
-      from: z.string().optional(),
-      subject: z.string().optional(),
-      text: z.string().optional().nullable(),
-      html: z.string().optional().nullable(),
-    })
-    .optional(),
-  from: z.string().optional(),
-  subject: z.string().optional(),
-  text: z.string().optional().nullable(),
-  html: z.string().optional().nullable(),
-});
+interface InboundFields {
+  from: string;
+  subject: string;
+  text: string;
+  html?: string | null;
+}
 
-emailRouter.post('/inbound/resend', async (request, response, next) => {
+async function handleInboundEmail(payload: unknown): Promise<InboundFields | null> {
+  if (!payload || typeof payload !== 'object') {
+    return null;
+  }
+
+  const body = payload as Record<string, any>;
+  const data = body.data && typeof body.data === 'object' ? body.data : {};
+
+  // Resolve raw sender field
+  const rawFrom =
+    data.from ??
+    data.sender ??
+    data.From ??
+    body.from ??
+    body.sender ??
+    body.From ??
+    body['from_email'] ??
+    body['sender_email'] ??
+    body.envelope?.from ??
+    body.headers?.from ??
+    body.email;
+
+  // Resolve subject
+  const rawSubject =
+    data.subject ??
+    data.Subject ??
+    body.subject ??
+    body.Subject ??
+    body.headers?.subject ??
+    'Support Request';
+
+  // Resolve body text / html
+  const rawText =
+    data.text ??
+    data['body-plain'] ??
+    data.body ??
+    body.text ??
+    body['body-plain'] ??
+    body.body ??
+    body.TextBody ??
+    body['stripped-text'] ??
+    body.content;
+
+  const rawHtml =
+    data.html ??
+    data['body-html'] ??
+    body.html ??
+    body['body-html'] ??
+    body.HtmlBody;
+
+  const senderEmail = extractEmailAddress(rawFrom);
+
+  if (senderEmail && (rawText || rawHtml)) {
+    const text = typeof rawText === 'string' && rawText.trim()
+      ? rawText.trim()
+      : stripHtml(typeof rawHtml === 'string' ? rawHtml : '');
+
+    if (text) {
+      return {
+        from: senderEmail,
+        subject: typeof rawSubject === 'string' && rawSubject.trim() ? rawSubject.trim() : 'Support Request',
+        text,
+        html: typeof rawHtml === 'string' ? rawHtml : null,
+      };
+    }
+  }
+
+  // Fallback for Resend receiving email by ID if body is not directly included
+  const emailId = data.id ?? body.id ?? body.email_id;
+  if (typeof emailId === 'string' && emailId) {
+    return retrieveReceivedEmail(emailId);
+  }
+
+  return null;
+}
+
+const inboundWebhookHandler = async (
+  request: import('express').Request,
+  response: import('express').Response,
+  next: import('express').NextFunction,
+) => {
   try {
-    const payload = inboundWebhookSchema.parse(request.body);
-    const inboundEmail = await resolveInboundEmail(payload);
+    const inboundEmail = await handleInboundEmail(request.body);
 
-    if (!inboundEmail) {
-      response.status(202).json({ skipped: true, reason: 'No email body available.' });
+    if (!inboundEmail || !inboundEmail.from || !inboundEmail.from.includes('@')) {
+      response.status(202).json({
+        skipped: true,
+        reason: 'No email body or valid sender email available in payload.',
+      });
       return;
     }
 
@@ -51,6 +122,58 @@ emailRouter.post('/inbound/resend', async (request, response, next) => {
         role: Role.CUSTOMER,
       },
     });
+
+    // Strip leading "Re:", "Fwd:" to match ongoing conversation threads
+    const cleanSubject = inboundEmail.subject.replace(/^(re|fwd):\s*/i, '').trim();
+
+    // Check if customer already has an active open ticket with matching subject
+    const existingTicket = await prisma.ticket.findFirst({
+      where: {
+        customerId: customer.id,
+        status: {
+          in: [TicketStatus.OPEN, TicketStatus.IN_PROGRESS],
+        },
+        subject: {
+          contains: cleanSubject.length > 5 ? cleanSubject : inboundEmail.subject,
+          mode: 'insensitive',
+        },
+      },
+      orderBy: {
+        updatedAt: 'desc',
+      },
+    });
+
+    if (existingTicket) {
+      await prisma.reply.create({
+        data: {
+          ticketId: existingTicket.id,
+          authorId: customer.id,
+          body: inboundEmail.text,
+        },
+      });
+
+      await prisma.ticket.update({
+        where: { id: existingTicket.id },
+        data: { updatedAt: new Date() },
+      });
+
+      await prisma.auditEvent.create({
+        data: {
+          ticketId: existingTicket.id,
+          actorId: customer.id,
+          action: 'ticket.reply_from_email',
+        },
+      });
+
+      response.status(200).json({
+        action: 'replied',
+        ticketId: existingTicket.id,
+        customerId: customer.id,
+      });
+      return;
+    }
+
+    // Otherwise create a brand new ticket
     const ticket = await prisma.ticket.create({
       data: {
         subject: inboundEmail.subject,
@@ -58,6 +181,7 @@ emailRouter.post('/inbound/resend', async (request, response, next) => {
         customerId: customer.id,
       },
     });
+
     await prisma.reply.create({
       data: {
         ticketId: ticket.id,
@@ -65,6 +189,7 @@ emailRouter.post('/inbound/resend', async (request, response, next) => {
         body: inboundEmail.text,
       },
     });
+
     await prisma.auditEvent.create({
       data: {
         ticketId: ticket.id,
@@ -72,55 +197,28 @@ emailRouter.post('/inbound/resend', async (request, response, next) => {
         action: 'ticket.created_from_email',
       },
     });
+
     void enrichTicketWithAi(ticket.id, ticket.subject, ticket.description);
 
     response.status(201).json({
+      action: 'created',
       ticketId: ticket.id,
       customerId: customer.id,
     });
   } catch (error) {
     next(error);
   }
-});
+};
 
-async function resolveInboundEmail(payload: z.infer<typeof inboundWebhookSchema>) {
-  const directFrom = payload.data?.from ?? payload.from;
-  const directSubject = payload.data?.subject ?? payload.subject;
-  const directText = payload.data?.text ?? payload.text;
-  const directHtml = payload.data?.html ?? payload.html;
-
-  if (directFrom && directSubject && (directText || directHtml)) {
-    return {
-      from: directFrom,
-      subject: directSubject,
-      text: directText ?? stripHtml(directHtml ?? ''),
-      html: directHtml,
-    };
-  }
-
-  const emailId = payload.data?.id;
-
-  if (!emailId) {
-    return null;
-  }
-
-  return retrieveReceivedEmail(emailId);
-}
+// Mount handlers on common webhook paths
+emailRouter.post('/inbound', inboundWebhookHandler);
+emailRouter.post('/inbound/resend', inboundWebhookHandler);
+emailRouter.post('/inbound/sender', inboundWebhookHandler);
+emailRouter.post('/webhook', inboundWebhookHandler);
 
 const emailErrorHandler: ErrorRequestHandler = (error, _request, response, _next) => {
   void _next;
-
-  if (error instanceof ZodError) {
-    response.status(400).json({
-      error: 'Invalid email webhook payload.',
-      issues: error.issues.map((issue) => ({
-        path: issue.path.join('.'),
-        message: issue.message,
-      })),
-    });
-    return;
-  }
-
+  console.error('Email webhook error:', error);
   response.status(500).json({ error: 'Email webhook failed.' });
 };
 
