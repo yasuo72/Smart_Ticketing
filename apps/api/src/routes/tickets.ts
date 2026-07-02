@@ -1,0 +1,493 @@
+import { Router, type ErrorRequestHandler } from 'express';
+import { z, ZodError } from 'zod';
+import {
+  Priority,
+  Role,
+  TicketStatus,
+  type AuditEvent,
+  type Reply,
+  type Ticket,
+  type User,
+} from '../generated/prisma/client.js';
+import { prisma } from '../lib/prisma.js';
+import { requireAuth } from '../middleware/auth.js';
+import { enrichTicketWithAi } from '../services/ai/ticketAi.js';
+import { sendEmail } from '../services/email/emailService.js';
+
+export const ticketsRouter = Router();
+
+const listTicketsSchema = z.object({
+  status: z.enum(TicketStatus).optional(),
+  priority: z.enum(Priority).optional(),
+  assigned: z.enum(['me', 'unassigned']).optional(),
+});
+
+const createTicketSchema = z.object({
+  subject: z.string().trim().min(3).max(160),
+  description: z.string().trim().min(10).max(5000),
+  priority: z.enum(Priority).optional(),
+});
+
+const updateTicketSchema = z
+  .object({
+    subject: z.string().trim().min(3).max(160).optional(),
+    description: z.string().trim().min(10).max(5000).optional(),
+    status: z.enum(TicketStatus).optional(),
+    priority: z.enum(Priority).optional(),
+    agentId: z.string().nullable().optional(),
+    assignToMe: z.boolean().optional(),
+  })
+  .refine((data) => Object.keys(data).length > 0, {
+    message: 'At least one field is required.',
+  });
+
+const createReplySchema = z.object({
+  body: z.string().trim().min(1).max(5000),
+  isInternal: z.boolean().optional(),
+});
+
+ticketsRouter.use(requireAuth);
+
+ticketsRouter.get('/', async (request, response, next) => {
+  try {
+    const query = listTicketsSchema.parse(request.query);
+    const user = request.currentUser!;
+    const isStaff = user.role === Role.AGENT || user.role === Role.ADMIN;
+
+    const tickets = await prisma.ticket.findMany({
+      where: {
+        customerId: isStaff ? undefined : user.id,
+        status: query.status,
+        priority: query.priority,
+        agentId:
+          query.assigned === 'me' ? user.id : query.assigned === 'unassigned' ? null : undefined,
+      },
+      include: {
+        customer: true,
+        agent: true,
+        replies: {
+          where: isStaff
+            ? undefined
+            : {
+                isInternal: false,
+              },
+          orderBy: {
+            createdAt: 'asc',
+          },
+          include: {
+            author: true,
+          },
+        },
+        auditEvents: {
+          orderBy: {
+            createdAt: 'asc',
+          },
+        },
+      },
+      orderBy: {
+        updatedAt: 'desc',
+      },
+    });
+
+    response.json({ tickets: tickets.map((ticket) => serializeTicket(ticket, isStaff)) });
+  } catch (error) {
+    next(error);
+  }
+});
+
+ticketsRouter.post('/', async (request, response, next) => {
+  try {
+    const input = createTicketSchema.parse(request.body);
+    const user = request.currentUser!;
+
+    let ticket = await prisma.ticket.create({
+      data: {
+        subject: input.subject,
+        description: input.description,
+        priority: input.priority ?? Priority.MEDIUM,
+        customerId: user.id,
+        replies: {
+          create: {
+            authorId: user.id,
+            body: input.description,
+          },
+        },
+        auditEvents: {
+          create: {
+            actorId: user.id,
+            action: 'ticket.created',
+            toValue: TicketStatus.OPEN,
+          },
+        },
+      },
+      include: ticketInclude(false),
+    });
+    const enrichedTicket = await enrichTicketWithAi(ticket.id, ticket.subject, ticket.description);
+
+    if (enrichedTicket) {
+      ticket = enrichedTicket;
+    }
+
+    response.status(201).json({ ticket: serializeTicket(ticket, false) });
+  } catch (error) {
+    next(error);
+  }
+});
+
+ticketsRouter.get('/:id', async (request, response) => {
+  const user = request.currentUser!;
+  const isStaff = user.role === Role.AGENT || user.role === Role.ADMIN;
+  const ticket = await findVisibleTicket(request.params.id, user.id, isStaff);
+
+  if (!ticket) {
+    response.status(404).json({ error: 'Ticket not found.' });
+    return;
+  }
+
+  response.json({ ticket: serializeTicket(ticket, isStaff) });
+});
+
+ticketsRouter.patch('/:id', async (request, response, next) => {
+  try {
+    const input = updateTicketSchema.parse(request.body);
+    const user = request.currentUser!;
+    const isStaff = user.role === Role.AGENT || user.role === Role.ADMIN;
+    const existing = await prisma.ticket.findUnique({
+      where: {
+        id: request.params.id,
+      },
+    });
+
+    if (!existing || (!isStaff && existing.customerId !== user.id)) {
+      response.status(404).json({ error: 'Ticket not found.' });
+      return;
+    }
+
+    if (!isStaff && existing.status === TicketStatus.CLOSED) {
+      response.status(403).json({ error: 'Closed tickets are read-only for customers.' });
+      return;
+    }
+
+    if (
+      !isStaff &&
+      (input.status || input.priority || input.agentId !== undefined || input.assignToMe)
+    ) {
+      response.status(403).json({ error: 'Customers cannot change workflow fields.' });
+      return;
+    }
+
+    const data = buildTicketUpdateData(input, existing, user.id, isStaff);
+    const auditEvents = buildAuditEvents(existing, data, user.id);
+
+    let ticket = await prisma.ticket.update({
+      where: {
+        id: existing.id,
+      },
+      data: {
+        ...data,
+        auditEvents:
+          auditEvents.length > 0
+            ? {
+                create: auditEvents,
+              }
+            : undefined,
+      },
+      include: ticketInclude(isStaff),
+    });
+
+    if (input.subject || input.description) {
+      const enrichedTicket = await enrichTicketWithAi(
+        ticket.id,
+        ticket.subject,
+        ticket.description,
+      );
+
+      if (enrichedTicket) {
+        ticket = enrichedTicket;
+      }
+    }
+
+    response.json({ ticket: serializeTicket(ticket, isStaff) });
+  } catch (error) {
+    next(error);
+  }
+});
+
+ticketsRouter.post('/:id/replies', async (request, response, next) => {
+  try {
+    const input = createReplySchema.parse(request.body);
+    const user = request.currentUser!;
+    const isStaff = user.role === Role.AGENT || user.role === Role.ADMIN;
+    const existing = await prisma.ticket.findUnique({
+      where: {
+        id: request.params.id,
+      },
+    });
+
+    if (!existing || (!isStaff && existing.customerId !== user.id)) {
+      response.status(404).json({ error: 'Ticket not found.' });
+      return;
+    }
+
+    if (!isStaff && existing.status === TicketStatus.CLOSED) {
+      response.status(403).json({ error: 'Closed tickets are read-only for customers.' });
+      return;
+    }
+
+    if (!isStaff && input.isInternal) {
+      response.status(403).json({ error: 'Customers cannot create internal notes.' });
+      return;
+    }
+
+    const ticket = await prisma.ticket.update({
+      where: {
+        id: existing.id,
+      },
+      data: {
+        status:
+          isStaff && existing.status === TicketStatus.OPEN ? TicketStatus.IN_PROGRESS : undefined,
+        replies: {
+          create: {
+            authorId: user.id,
+            body: input.body,
+            isInternal: isStaff ? (input.isInternal ?? false) : false,
+          },
+        },
+        auditEvents:
+          isStaff && existing.status === TicketStatus.OPEN
+            ? {
+                create: {
+                  actorId: user.id,
+                  action: 'ticket.status_changed',
+                  fromValue: existing.status,
+                  toValue: TicketStatus.IN_PROGRESS,
+                },
+              }
+            : undefined,
+      },
+      include: ticketInclude(isStaff),
+    });
+
+    if (isStaff && !input.isInternal) {
+      await sendTicketReplyEmail({
+        customerEmail: ticket.customer.email,
+        ticketSubject: ticket.subject,
+        replyBody: input.body,
+      });
+    }
+
+    response.status(201).json({ ticket: serializeTicket(ticket, isStaff) });
+  } catch (error) {
+    next(error);
+  }
+});
+
+function ticketInclude(isStaff: boolean) {
+  return {
+    customer: true,
+    agent: true,
+    replies: {
+      where: isStaff
+        ? undefined
+        : {
+            isInternal: false,
+          },
+      orderBy: {
+        createdAt: 'asc' as const,
+      },
+      include: {
+        author: true,
+      },
+    },
+    auditEvents: {
+      orderBy: {
+        createdAt: 'asc' as const,
+      },
+    },
+  };
+}
+
+async function findVisibleTicket(ticketId: string, userId: string, isStaff: boolean) {
+  return prisma.ticket.findFirst({
+    where: {
+      id: ticketId,
+      customerId: isStaff ? undefined : userId,
+    },
+    include: ticketInclude(isStaff),
+  });
+}
+
+function buildTicketUpdateData(
+  input: z.infer<typeof updateTicketSchema>,
+  existing: Ticket,
+  currentUserId: string,
+  isStaff: boolean,
+) {
+  const status = input.status;
+  const resolvedAt =
+    status === TicketStatus.RESOLVED || status === TicketStatus.AUTO_RESOLVED
+      ? new Date()
+      : status && existing.resolvedAt
+        ? null
+        : undefined;
+  const closedAt = status === TicketStatus.CLOSED ? new Date() : status ? null : undefined;
+
+  return {
+    subject: input.subject,
+    description: input.description,
+    status: isStaff ? status : undefined,
+    priority: isStaff ? input.priority : undefined,
+    agentId: isStaff ? (input.assignToMe ? currentUserId : input.agentId) : undefined,
+    resolvedAt,
+    closedAt,
+  };
+}
+
+function buildAuditEvents(
+  existing: Ticket,
+  data: ReturnType<typeof buildTicketUpdateData>,
+  actorId: string,
+) {
+  const auditEvents: Array<{
+    actorId: string;
+    action: string;
+    fromValue?: string | null;
+    toValue?: string | null;
+  }> = [];
+
+  if (data.status && data.status !== existing.status) {
+    auditEvents.push({
+      actorId,
+      action: 'ticket.status_changed',
+      fromValue: existing.status,
+      toValue: data.status,
+    });
+  }
+
+  if (data.priority && data.priority !== existing.priority) {
+    auditEvents.push({
+      actorId,
+      action: 'ticket.priority_changed',
+      fromValue: existing.priority,
+      toValue: data.priority,
+    });
+  }
+
+  if (data.agentId !== undefined && data.agentId !== existing.agentId) {
+    auditEvents.push({
+      actorId,
+      action: 'ticket.assignment_changed',
+      fromValue: existing.agentId,
+      toValue: data.agentId,
+    });
+  }
+
+  return auditEvents;
+}
+
+type TicketWithRelations = Ticket & {
+  customer: User;
+  agent: User | null;
+  replies: Array<Reply & { author: User }>;
+  auditEvents: AuditEvent[];
+};
+
+function serializeTicket(ticket: TicketWithRelations, isStaff: boolean) {
+  return {
+    id: ticket.id,
+    subject: ticket.subject,
+    description: ticket.description,
+    status: ticket.status,
+    priority: ticket.priority,
+    category: ticket.category,
+    aiSummary: ticket.aiSummary,
+    customer: {
+      id: ticket.customer.id,
+      name: ticket.customer.name,
+      email: ticket.customer.email,
+    },
+    agent: ticket.agent
+      ? {
+          id: ticket.agent.id,
+          name: ticket.agent.name,
+          email: ticket.agent.email,
+        }
+      : null,
+    replies: ticket.replies.map((reply) => ({
+      id: reply.id,
+      body: reply.body,
+      isAiDraft: reply.isAiDraft,
+      isInternal: reply.isInternal,
+      createdAt: reply.createdAt.toISOString(),
+      author: {
+        id: reply.author.id,
+        name: reply.author.name,
+        email: reply.author.email,
+        role: reply.author.role,
+      },
+    })),
+    auditEvents: isStaff
+      ? ticket.auditEvents.map((event) => ({
+          id: event.id,
+          action: event.action,
+          fromValue: event.fromValue,
+          toValue: event.toValue,
+          createdAt: event.createdAt.toISOString(),
+        }))
+      : [],
+    createdAt: ticket.createdAt.toISOString(),
+    updatedAt: ticket.updatedAt.toISOString(),
+    resolvedAt: ticket.resolvedAt?.toISOString() ?? null,
+    closedAt: ticket.closedAt?.toISOString() ?? null,
+  };
+}
+
+async function sendTicketReplyEmail({
+  customerEmail,
+  ticketSubject,
+  replyBody,
+}: {
+  customerEmail: string;
+  ticketSubject: string;
+  replyBody: string;
+}) {
+  try {
+    await sendEmail({
+      to: customerEmail,
+      subject: `Re: ${ticketSubject}`,
+      text: `${replyBody}\n\nReply to this email or open your support ticket to continue the conversation.`,
+      html: `<p>${escapeHtml(replyBody).replace(/\n/g, '<br>')}</p><p>Reply to this email or open your support ticket to continue the conversation.</p>`,
+      replyTo: process.env.SUPPORT_EMAIL,
+    });
+  } catch (error) {
+    console.warn('Ticket reply email skipped:', error instanceof Error ? error.message : error);
+  }
+}
+
+function escapeHtml(value: string) {
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
+const ticketsErrorHandler: ErrorRequestHandler = (error, _request, response, _next) => {
+  void _next;
+
+  if (error instanceof ZodError) {
+    response.status(400).json({
+      error: 'Invalid request.',
+      issues: error.issues.map((issue) => ({
+        path: issue.path.join('.'),
+        message: issue.message,
+      })),
+    });
+    return;
+  }
+
+  response.status(500).json({ error: 'Unexpected ticket management error.' });
+};
+
+ticketsRouter.use(ticketsErrorHandler);

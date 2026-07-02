@@ -1,0 +1,10 @@
+node_modules/
+dist/
+build/
+coverage/
+playwright-report/
+test-results/
+*.log
+ticketing-app-build-spec.md
+ticketing-app-mvp-planning.md
+apps/api/src/generated/prisma/
