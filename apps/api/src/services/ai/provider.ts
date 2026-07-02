@@ -60,7 +60,13 @@ const groqProvider: AiProvider = {
     }
 
     const tryModels = Array.from(
-      new Set([configuredModel, 'llama-3.3-70b-versatile', 'llama-3.1-8b-instant', 'qwen-2.5-32b', 'mixtral-8x7b-32768'])
+      new Set([
+        configuredModel,
+        'llama-3.3-70b-versatile',
+        'llama-3.1-8b-instant',
+        'qwen-2.5-32b',
+        'mixtral-8x7b-32768',
+      ]),
     );
     let lastError: Error | null = null;
 
@@ -103,7 +109,9 @@ const groqProvider: AiProvider = {
 
           if (!response.ok) {
             const errorText = await response.text();
-            lastError = new Error(`Groq request failed (${model}): ${response.status} ${errorText}`);
+            lastError = new Error(
+              `Groq request failed (${model}): ${response.status} ${errorText}`,
+            );
             break;
           }
 
@@ -133,7 +141,11 @@ const geminiProvider: AiProvider = {
   async generateText(prompt, options = {}) {
     const apiKey = process.env.GEMINI_API_KEY;
     let configuredModel = process.env.GEMINI_MODEL ?? 'gemini-1.5-flash';
-    if (configuredModel.includes('2.5') || configuredModel.includes('2.0') || configuredModel.includes('lite')) {
+    if (
+      configuredModel.includes('2.5') ||
+      configuredModel.includes('2.0') ||
+      configuredModel.includes('lite')
+    ) {
       configuredModel = 'gemini-1.5-flash';
     }
 
@@ -142,7 +154,13 @@ const geminiProvider: AiProvider = {
     }
 
     const tryModels = Array.from(
-      new Set(['gemini-1.5-flash', configuredModel, 'gemini-1.5-pro', 'gemini-2.0-flash', 'gemini-2.0-flash-lite'])
+      new Set([
+        'gemini-1.5-flash',
+        configuredModel,
+        'gemini-1.5-pro',
+        'gemini-2.0-flash',
+        'gemini-2.0-flash-lite',
+      ]),
     );
     let lastError: Error | null = null;
 
@@ -181,7 +199,9 @@ const geminiProvider: AiProvider = {
 
           if (!response.ok) {
             const errorText = await response.text();
-            lastError = new Error(`Gemini request failed (${model}): ${response.status} ${errorText}`);
+            lastError = new Error(
+              `Gemini request failed (${model}): ${response.status} ${errorText}`,
+            );
             break;
           }
 

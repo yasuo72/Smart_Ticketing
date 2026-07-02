@@ -55,7 +55,9 @@ export function TicketsPage({ user }: { user: AuthUser }) {
     return true;
   });
 
-  useEffect(() => { void loadTickets(); }, []);
+  useEffect(() => {
+    void loadTickets();
+  }, []);
 
   async function loadTickets() {
     setIsLoading(true);
@@ -65,7 +67,10 @@ export function TicketsPage({ user }: { user: AuthUser }) {
     if (priorityFilter !== 'ALL') params.set('priority', priorityFilter);
     const res = await apiFetch(`/api/tickets?${params}`);
     setIsLoading(false);
-    if (!res.ok) { setError('Could not load tickets.'); return; }
+    if (!res.ok) {
+      setError('Could not load tickets.');
+      return;
+    }
     const data = (await res.json()) as { tickets: Ticket[] };
     setTickets(data.tickets);
     setSelectedId((cur) => cur ?? data.tickets[0]?.id ?? null);
@@ -79,10 +84,15 @@ export function TicketsPage({ user }: { user: AuthUser }) {
       body: JSON.stringify({ subject, description, priority: newPriority }),
     });
     const data = (await res.json().catch(() => ({}))) as { ticket?: Ticket; error?: string };
-    if (!res.ok || !data.ticket) { setError(data.error ?? 'Could not create ticket.'); return; }
+    if (!res.ok || !data.ticket) {
+      setError(data.error ?? 'Could not create ticket.');
+      return;
+    }
     setTickets((prev) => [data.ticket!, ...prev]);
     setSelectedId(data.ticket.id);
-    setSubject(''); setDescription(''); setNewPriority('MEDIUM');
+    setSubject('');
+    setDescription('');
+    setNewPriority('MEDIUM');
     setShowCreateForm(false);
   }
 
@@ -92,7 +102,10 @@ export function TicketsPage({ user }: { user: AuthUser }) {
       body: JSON.stringify(patch),
     });
     const data = (await res.json().catch(() => ({}))) as { ticket?: Ticket; error?: string };
-    if (!res.ok || !data.ticket) { setError(data.error ?? 'Could not update ticket.'); return; }
+    if (!res.ok || !data.ticket) {
+      setError(data.error ?? 'Could not update ticket.');
+      return;
+    }
     replace(data.ticket);
   }
 
@@ -104,20 +117,29 @@ export function TicketsPage({ user }: { user: AuthUser }) {
       body: JSON.stringify({ body: replyBody, isInternal }),
     });
     const data = (await res.json().catch(() => ({}))) as { ticket?: Ticket; error?: string };
-    if (!res.ok || !data.ticket) { setError(data.error ?? 'Could not send reply.'); return; }
+    if (!res.ok || !data.ticket) {
+      setError(data.error ?? 'Could not send reply.');
+      return;
+    }
     replace(data.ticket);
-    setReplyBody(''); setPolishedReply(''); setIsInternal(false);
+    setReplyBody('');
+    setPolishedReply('');
+    setIsInternal(false);
   }
 
   async function polishReply() {
-    setError(''); setIsPolishing(true);
+    setError('');
+    setIsPolishing(true);
     const res = await apiFetch('/api/ai/polish-reply', {
       method: 'POST',
       body: JSON.stringify({ draft: replyBody }),
     });
     const data = (await res.json().catch(() => ({}))) as { polished?: string; error?: string };
     setIsPolishing(false);
-    if (!res.ok || !data.polished) { setError(data.error ?? 'Could not polish reply.'); return; }
+    if (!res.ok || !data.polished) {
+      setError(data.error ?? 'Could not polish reply.');
+      return;
+    }
     setPolishedReply(data.polished);
   }
 
@@ -180,7 +202,11 @@ export function TicketsPage({ user }: { user: AuthUser }) {
                 className="h-7 rounded-md border border-slate-200 bg-white px-2 text-xs text-slate-700 outline-none focus:border-indigo-400"
               >
                 <option value="ALL">All Status</option>
-                {statuses.map((s) => <option key={s} value={s}>{s.replace(/_/g, ' ')}</option>)}
+                {statuses.map((s) => (
+                  <option key={s} value={s}>
+                    {s.replace(/_/g, ' ')}
+                  </option>
+                ))}
               </select>
               <select
                 value={priorityFilter}
@@ -188,7 +214,11 @@ export function TicketsPage({ user }: { user: AuthUser }) {
                 className="h-7 rounded-md border border-slate-200 bg-white px-2 text-xs text-slate-700 outline-none focus:border-indigo-400"
               >
                 <option value="ALL">All Priority</option>
-                {priorities.map((p) => <option key={p} value={p}>{p}</option>)}
+                {priorities.map((p) => (
+                  <option key={p} value={p}>
+                    {p}
+                  </option>
+                ))}
               </select>
               <button
                 onClick={loadTickets}
@@ -209,7 +239,11 @@ export function TicketsPage({ user }: { user: AuthUser }) {
             >
               <div className="flex items-center justify-between mb-1">
                 <h3 className="text-sm font-semibold text-slate-800">New Ticket</h3>
-                <button type="button" onClick={() => setShowCreateForm(false)} className="text-slate-400 hover:text-slate-600 cursor-pointer">
+                <button
+                  type="button"
+                  onClick={() => setShowCreateForm(false)}
+                  className="text-slate-400 hover:text-slate-600 cursor-pointer"
+                >
                   <X className="size-4" />
                 </button>
               </div>
@@ -234,7 +268,11 @@ export function TicketsPage({ user }: { user: AuthUser }) {
                 onChange={(e) => setNewPriority(e.target.value as Priority)}
                 className="h-9 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm outline-none focus:border-indigo-400"
               >
-                {priorities.map((p) => <option key={p} value={p}>{p}</option>)}
+                {priorities.map((p) => (
+                  <option key={p} value={p}>
+                    {p}
+                  </option>
+                ))}
               </select>
               <button
                 type="submit"
@@ -270,7 +308,12 @@ export function TicketsPage({ user }: { user: AuthUser }) {
                   style={!isSelected ? { borderLeftColor: statusBorderColor[ticket.status] } : {}}
                 >
                   <div className="flex items-start justify-between gap-2">
-                    <p className={cn('text-sm font-medium truncate', isSelected ? 'text-indigo-900' : 'text-slate-800')}>
+                    <p
+                      className={cn(
+                        'text-sm font-medium truncate',
+                        isSelected ? 'text-indigo-900' : 'text-slate-800',
+                      )}
+                    >
                       {ticket.subject}
                     </p>
                     <PriorityBadge priority={ticket.priority} />
@@ -305,7 +348,10 @@ export function TicketsPage({ user }: { user: AuthUser }) {
         </div>
 
         {/* Right panel: detail */}
-        <div className="flex-1 flex flex-col overflow-hidden bg-slate-50" data-testid="ticket-detail">
+        <div
+          className="flex-1 flex flex-col overflow-hidden bg-slate-50"
+          data-testid="ticket-detail"
+        >
           {selected ? (
             <>
               {/* Detail header */}
@@ -315,9 +361,13 @@ export function TicketsPage({ user }: { user: AuthUser }) {
                     <div className="flex items-center gap-2 text-xs text-slate-400 mb-1">
                       <span>Tickets</span>
                       <ChevronRight className="size-3" />
-                      <span className="text-slate-600 font-medium truncate max-w-60">{selected.subject}</span>
+                      <span className="text-slate-600 font-medium truncate max-w-60">
+                        {selected.subject}
+                      </span>
                     </div>
-                    <h2 className="text-xl font-bold text-slate-900 leading-tight">{selected.subject}</h2>
+                    <h2 className="text-xl font-bold text-slate-900 leading-tight">
+                      {selected.subject}
+                    </h2>
                     <div className="flex flex-wrap items-center gap-2 mt-2">
                       <StatusBadge status={selected.status} />
                       <PriorityBadge priority={selected.priority} />
@@ -335,17 +385,29 @@ export function TicketsPage({ user }: { user: AuthUser }) {
                     <div className="flex flex-wrap items-center gap-2 shrink-0">
                       <select
                         value={selected.status}
-                        onChange={(e) => void updateTicket(selected.id, { status: e.target.value as TicketStatus })}
+                        onChange={(e) =>
+                          void updateTicket(selected.id, { status: e.target.value as TicketStatus })
+                        }
                         className="h-8 rounded-lg border border-slate-200 bg-white px-2 text-xs text-slate-700 outline-none focus:border-indigo-400 shadow-sm cursor-pointer"
                       >
-                        {statuses.map((s) => <option key={s} value={s}>{s.replace(/_/g, ' ')}</option>)}
+                        {statuses.map((s) => (
+                          <option key={s} value={s}>
+                            {s.replace(/_/g, ' ')}
+                          </option>
+                        ))}
                       </select>
                       <select
                         value={selected.priority}
-                        onChange={(e) => void updateTicket(selected.id, { priority: e.target.value as Priority })}
+                        onChange={(e) =>
+                          void updateTicket(selected.id, { priority: e.target.value as Priority })
+                        }
                         className="h-8 rounded-lg border border-slate-200 bg-white px-2 text-xs text-slate-700 outline-none focus:border-indigo-400 shadow-sm cursor-pointer"
                       >
-                        {priorities.map((p) => <option key={p} value={p}>{p}</option>)}
+                        {priorities.map((p) => (
+                          <option key={p} value={p}>
+                            {p}
+                          </option>
+                        ))}
                       </select>
                       <button
                         onClick={() => void updateTicket(selected.id, { assignToMe: true })}
@@ -377,8 +439,12 @@ export function TicketsPage({ user }: { user: AuthUser }) {
 
               {/* Description */}
               <div className="bg-white mx-6 mt-4 rounded-xl border border-slate-200 p-4 shrink-0 shadow-sm">
-                <p className="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">Description</p>
-                <p className="text-sm text-slate-700 whitespace-pre-wrap leading-relaxed">{selected.description}</p>
+                <p className="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">
+                  Description
+                </p>
+                <p className="text-sm text-slate-700 whitespace-pre-wrap leading-relaxed">
+                  {selected.description}
+                </p>
                 {selected.aiSummary && (
                   <div className="mt-3 flex items-start gap-2 rounded-lg bg-indigo-50 border border-indigo-100 px-3 py-2">
                     <Bot className="size-3.5 text-indigo-500 mt-0.5 shrink-0" />
@@ -406,16 +472,27 @@ export function TicketsPage({ user }: { user: AuthUser }) {
                           background: isCustomer
                             ? 'linear-gradient(135deg,#3b82f6,#06b6d4)'
                             : reply.author.name === 'AI System'
-                            ? 'linear-gradient(135deg,#6366f1,#8b5cf6)'
-                            : 'linear-gradient(135deg,#10b981,#059669)',
+                              ? 'linear-gradient(135deg,#6366f1,#8b5cf6)'
+                              : 'linear-gradient(135deg,#10b981,#059669)',
                         }}
                       >
-                        {reply.author.name === 'AI System' ? <Bot className="size-4" /> : getInitials(reply.author.name)}
+                        {reply.author.name === 'AI System' ? (
+                          <Bot className="size-4" />
+                        ) : (
+                          getInitials(reply.author.name)
+                        )}
                       </div>
 
-                      <div className={cn('max-w-[75%] space-y-1', isCustomer ? 'items-start' : 'items-end')}>
+                      <div
+                        className={cn(
+                          'max-w-[75%] space-y-1',
+                          isCustomer ? 'items-start' : 'items-end',
+                        )}
+                      >
                         <div className="flex items-center gap-2 flex-wrap">
-                          <span className="text-xs font-medium text-slate-700">{reply.author.name}</span>
+                          <span className="text-xs font-medium text-slate-700">
+                            {reply.author.name}
+                          </span>
                           <span className="text-xs text-slate-400">{reply.author.role}</span>
                           {reply.isInternal && (
                             <span className="rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-700">
@@ -428,7 +505,9 @@ export function TicketsPage({ user }: { user: AuthUser }) {
                               AI
                             </span>
                           )}
-                          <span className="text-xs text-slate-400">{formatRelativeTime(reply.createdAt)}</span>
+                          <span className="text-xs text-slate-400">
+                            {formatRelativeTime(reply.createdAt)}
+                          </span>
                         </div>
                         <div
                           className={cn(
@@ -436,10 +515,14 @@ export function TicketsPage({ user }: { user: AuthUser }) {
                             reply.isInternal
                               ? 'border border-amber-200 bg-amber-50 text-amber-900'
                               : isCustomer
-                              ? 'border border-slate-200 bg-white text-slate-800'
-                              : 'text-white',
+                                ? 'border border-slate-200 bg-white text-slate-800'
+                                : 'text-white',
                           )}
-                          style={!reply.isInternal && !isCustomer ? { background: 'linear-gradient(135deg,#6366f1,#4f46e5)' } : {}}
+                          style={
+                            !reply.isInternal && !isCustomer
+                              ? { background: 'linear-gradient(135deg,#6366f1,#4f46e5)' }
+                              : {}
+                          }
                         >
                           <p className="whitespace-pre-wrap">{reply.body}</p>
                         </div>
@@ -451,7 +534,9 @@ export function TicketsPage({ user }: { user: AuthUser }) {
                 {selected.replies.length === 0 && (
                   <div className="flex flex-col items-center py-8 text-center">
                     <MessageSquare className="size-8 text-slate-300 mb-2" />
-                    <p className="text-sm text-slate-400">No replies yet. Start the conversation below.</p>
+                    <p className="text-sm text-slate-400">
+                      No replies yet. Start the conversation below.
+                    </p>
                   </div>
                 )}
               </div>
@@ -471,7 +556,10 @@ export function TicketsPage({ user }: { user: AuthUser }) {
                     placeholder="Write your reply..."
                     value={replyBody}
                     disabled={!isStaff && selected.status === 'CLOSED'}
-                    onChange={(e) => { setReplyBody(e.target.value); setPolishedReply(''); }}
+                    onChange={(e) => {
+                      setReplyBody(e.target.value);
+                      setPolishedReply('');
+                    }}
                     className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none resize-none transition focus:border-indigo-400 focus:bg-white focus:ring-2 focus:ring-indigo-100"
                   />
 
@@ -484,7 +572,10 @@ export function TicketsPage({ user }: { user: AuthUser }) {
                         </span>
                         <button
                           type="button"
-                          onClick={() => { setReplyBody(polishedReply); setPolishedReply(''); }}
+                          onClick={() => {
+                            setReplyBody(polishedReply);
+                            setPolishedReply('');
+                          }}
                           className="text-xs font-medium text-indigo-600 hover:text-indigo-800 transition cursor-pointer"
                         >
                           Use this →
@@ -548,7 +639,9 @@ export function TicketsPage({ user }: { user: AuthUser }) {
                 <MessageSquare className="size-8 text-slate-400" />
               </div>
               <h3 className="text-base font-semibold text-slate-700 mb-1">No ticket selected</h3>
-              <p className="text-sm text-slate-400">Select a ticket from the list to view details</p>
+              <p className="text-sm text-slate-400">
+                Select a ticket from the list to view details
+              </p>
             </div>
           )}
         </div>

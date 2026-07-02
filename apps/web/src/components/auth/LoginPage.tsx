@@ -17,10 +17,26 @@ import type { AuthUser } from '../../lib/types';
 type AuthMode = 'login' | 'signup';
 
 const features = [
-  { icon: Bot, label: 'AI-Powered Auto-Reply', desc: 'Groq AI automatically handles common requests' },
-  { icon: Zap, label: 'Real-time Dashboard', desc: 'Live metrics and team performance at a glance' },
-  { icon: Sparkles, label: 'Smart Categorization', desc: 'AI classifies and prioritizes tickets instantly' },
-  { icon: CheckCircle2, label: 'Email Integration', desc: 'Full inbound/outbound email threading via Resend' },
+  {
+    icon: Bot,
+    label: 'AI-Powered Auto-Reply',
+    desc: 'Groq AI automatically handles common requests',
+  },
+  {
+    icon: Zap,
+    label: 'Real-time Dashboard',
+    desc: 'Live metrics and team performance at a glance',
+  },
+  {
+    icon: Sparkles,
+    label: 'Smart Categorization',
+    desc: 'AI classifies and prioritizes tickets instantly',
+  },
+  {
+    icon: CheckCircle2,
+    label: 'Email Integration',
+    desc: 'Full inbound/outbound email threading via Resend',
+  },
 ];
 
 type Props = {
@@ -73,10 +89,15 @@ export function LoginPage({ onLogin }: Props) {
             <LifeBuoy className="size-5 text-white" />
           </div>
           <div>
-            <p className="text-lg font-bold text-white" style={{ fontFamily: "'Outfit', sans-serif" }}>
+            <p
+              className="text-lg font-bold text-white"
+              style={{ fontFamily: "'Outfit', sans-serif" }}
+            >
               AI Ticketing
             </p>
-            <p className="text-xs" style={{ color: '#475569' }}>Support Intelligence Platform</p>
+            <p className="text-xs" style={{ color: '#475569' }}>
+              Support Intelligence Platform
+            </p>
           </div>
         </div>
 
@@ -88,12 +109,20 @@ export function LoginPage({ onLogin }: Props) {
               style={{ fontFamily: "'Outfit', sans-serif" }}
             >
               Support powered by
-              <span className="block" style={{ background: 'linear-gradient(90deg,#6366f1,#a78bfa)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+              <span
+                className="block"
+                style={{
+                  background: 'linear-gradient(90deg,#6366f1,#a78bfa)',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                }}
+              >
                 artificial intelligence
               </span>
             </h2>
             <p className="mt-4 text-base leading-relaxed" style={{ color: '#94a3b8' }}>
-              Resolve customer issues faster with AI-driven categorization, automatic replies, and smart escalation.
+              Resolve customer issues faster with AI-driven categorization, automatic replies, and
+              smart escalation.
             </p>
           </div>
 
@@ -104,13 +133,18 @@ export function LoginPage({ onLogin }: Props) {
                 <div key={f.label} className="flex items-start gap-3">
                   <div
                     className="flex size-8 shrink-0 items-center justify-center rounded-lg mt-0.5"
-                    style={{ background: 'rgba(99,102,241,0.15)', border: '1px solid rgba(99,102,241,0.3)' }}
+                    style={{
+                      background: 'rgba(99,102,241,0.15)',
+                      border: '1px solid rgba(99,102,241,0.3)',
+                    }}
                   >
                     <Icon className="size-4 text-indigo-400" />
                   </div>
                   <div>
                     <p className="text-sm font-semibold text-white">{f.label}</p>
-                    <p className="text-xs" style={{ color: '#64748b' }}>{f.desc}</p>
+                    <p className="text-xs" style={{ color: '#64748b' }}>
+                      {f.desc}
+                    </p>
                   </div>
                 </div>
               );
@@ -129,18 +163,31 @@ export function LoginPage({ onLogin }: Props) {
         <div className="w-full max-w-md animate-scale-in">
           {/* Mobile logo */}
           <div className="flex items-center gap-3 mb-8 lg:hidden">
-            <div className="flex size-9 items-center justify-center rounded-xl" style={{ background: 'linear-gradient(135deg,#6366f1,#8b5cf6)' }}>
+            <div
+              className="flex size-9 items-center justify-center rounded-xl"
+              style={{ background: 'linear-gradient(135deg,#6366f1,#8b5cf6)' }}
+            >
               <LifeBuoy className="size-5 text-white" />
             </div>
-            <p className="text-base font-bold text-slate-900" style={{ fontFamily: "'Outfit', sans-serif" }}>AI Ticketing</p>
+            <p
+              className="text-base font-bold text-slate-900"
+              style={{ fontFamily: "'Outfit', sans-serif" }}
+            >
+              AI Ticketing
+            </p>
           </div>
 
           <div className="rounded-2xl border border-slate-200 bg-white p-8 shadow-xl shadow-slate-200/50">
-            <h1 className="text-2xl font-bold text-slate-900 mb-1" style={{ fontFamily: "'Outfit', sans-serif" }}>
+            <h1
+              className="text-2xl font-bold text-slate-900 mb-1"
+              style={{ fontFamily: "'Outfit', sans-serif" }}
+            >
               {mode === 'login' ? 'Welcome back' : 'Create account'}
             </h1>
             <p className="text-sm text-slate-500 mb-6">
-              {mode === 'login' ? 'Sign in to your support workspace' : 'Get started with AI-powered support'}
+              {mode === 'login'
+                ? 'Sign in to your support workspace'
+                : 'Get started with AI-powered support'}
             </p>
 
             {/* Mode toggle */}
@@ -149,12 +196,21 @@ export function LoginPage({ onLogin }: Props) {
                 <button
                   key={m}
                   type="button"
-                  onClick={() => { setMode(m); setError(''); }}
+                  onClick={() => {
+                    setMode(m);
+                    setError('');
+                  }}
                   className={`flex-1 flex items-center justify-center gap-2 rounded-lg py-2 text-sm font-medium transition cursor-pointer ${
-                    mode === m ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'
+                    mode === m
+                      ? 'bg-white text-slate-900 shadow-sm'
+                      : 'text-slate-500 hover:text-slate-700'
                   }`}
                 >
-                  {m === 'login' ? <LogIn className="size-3.5" /> : <UserPlus className="size-3.5" />}
+                  {m === 'login' ? (
+                    <LogIn className="size-3.5" />
+                  ) : (
+                    <UserPlus className="size-3.5" />
+                  )}
                   {m === 'login' ? 'Sign In' : 'Sign Up'}
                 </button>
               ))}
@@ -163,7 +219,9 @@ export function LoginPage({ onLogin }: Props) {
             <form onSubmit={handleSubmit} data-testid="auth-form" className="space-y-4">
               {mode === 'signup' && (
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1.5">Full Name</label>
+                  <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                    Full Name
+                  </label>
                   <div className="relative">
                     <User className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-400" />
                     <input
@@ -180,7 +238,9 @@ export function LoginPage({ onLogin }: Props) {
               )}
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1.5">Email Address</label>
+                <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                  Email Address
+                </label>
                 <div className="relative">
                   <Mail className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-400" />
                   <input
@@ -232,10 +292,19 @@ export function LoginPage({ onLogin }: Props) {
             <div className="mt-5 rounded-xl border border-slate-100 bg-slate-50 p-3">
               <p className="text-xs font-semibold text-slate-600 mb-1.5">Demo accounts</p>
               <div className="space-y-0.5 text-xs text-slate-500">
-                <p><span className="font-mono text-slate-700">admin@aiticketing.local</span> — Admin</p>
-                <p><span className="font-mono text-slate-700">agent@aiticketing.local</span> — Agent</p>
-                <p><span className="font-mono text-slate-700">customer@aiticketing.local</span> — Customer</p>
-                <p className="mt-1 text-slate-400">Password: <span className="font-mono">Password123!</span></p>
+                <p>
+                  <span className="font-mono text-slate-700">admin@aiticketing.local</span> — Admin
+                </p>
+                <p>
+                  <span className="font-mono text-slate-700">agent@aiticketing.local</span> — Agent
+                </p>
+                <p>
+                  <span className="font-mono text-slate-700">customer@aiticketing.local</span> —
+                  Customer
+                </p>
+                <p className="mt-1 text-slate-400">
+                  Password: <span className="font-mono">Password123!</span>
+                </p>
               </div>
             </div>
           </div>

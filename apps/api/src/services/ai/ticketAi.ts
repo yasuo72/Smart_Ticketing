@@ -136,7 +136,10 @@ Description: ${description}`;
       autoReply,
     };
   } catch (error) {
-    console.warn('AI API quota limit hit or failed, using Smart Fallback engine:', error instanceof Error ? error.message : error);
+    console.warn(
+      'AI API quota limit hit or failed, using Smart Fallback engine:',
+      error instanceof Error ? error.message : error,
+    );
     return fallbackTicketAnalysis(subject, description);
   }
 }
@@ -172,7 +175,10 @@ ${draft}`;
       temperature: 0.3,
     });
   } catch (error) {
-    console.warn('AI API call failed during polishReply, applying fallback polish:', error instanceof Error ? error.message : error);
+    console.warn(
+      'AI API call failed during polishReply, applying fallback polish:',
+      error instanceof Error ? error.message : error,
+    );
     return fallbackPolishReply(draft);
   }
 }

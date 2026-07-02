@@ -11,7 +11,14 @@ const config: Record<Priority, { label: string; bg: string; text: string; border
 export function PriorityBadge({ priority }: { priority: Priority }) {
   const c = config[priority] ?? config.MEDIUM;
   return (
-    <span className={cn('inline-flex items-center rounded-md border px-2 py-0.5 text-xs font-semibold', c.bg, c.text, c.border)}>
+    <span
+      className={cn(
+        'inline-flex items-center rounded-md border px-2 py-0.5 text-xs font-semibold',
+        c.bg,
+        c.text,
+        c.border,
+      )}
+    >
       {c.label}
     </span>
   );

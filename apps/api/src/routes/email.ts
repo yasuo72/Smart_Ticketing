@@ -60,24 +60,23 @@ async function handleInboundEmail(payload: unknown): Promise<InboundFields | nul
     body['stripped-text'] ??
     body.content;
 
-  const rawHtml =
-    data.html ??
-    data['body-html'] ??
-    body.html ??
-    body['body-html'] ??
-    body.HtmlBody;
+  const rawHtml = data.html ?? data['body-html'] ?? body.html ?? body['body-html'] ?? body.HtmlBody;
 
   const senderEmail = extractEmailAddress(rawFrom);
 
   if (senderEmail && (rawText || rawHtml)) {
-    const text = typeof rawText === 'string' && rawText.trim()
-      ? rawText.trim()
-      : stripHtml(typeof rawHtml === 'string' ? rawHtml : '');
+    const text =
+      typeof rawText === 'string' && rawText.trim()
+        ? rawText.trim()
+        : stripHtml(typeof rawHtml === 'string' ? rawHtml : '');
 
     if (text) {
       return {
         from: senderEmail,
-        subject: typeof rawSubject === 'string' && rawSubject.trim() ? rawSubject.trim() : 'Support Request',
+        subject:
+          typeof rawSubject === 'string' && rawSubject.trim()
+            ? rawSubject.trim()
+            : 'Support Request',
         text,
         html: typeof rawHtml === 'string' ? rawHtml : null,
       };
@@ -95,7 +94,8 @@ async function handleInboundEmail(payload: unknown): Promise<InboundFields | nul
 
   // Safe Fallback: If senderEmail is known from payload (e.g. data.from), create ticket even if body was omitted in webhook
   if (senderEmail && senderEmail.includes('@')) {
-    const subjectStr = typeof rawSubject === 'string' && rawSubject.trim() ? rawSubject.trim() : 'Support Request';
+    const subjectStr =
+      typeof rawSubject === 'string' && rawSubject.trim() ? rawSubject.trim() : 'Support Request';
     return {
       from: senderEmail,
       subject: subjectStr,
@@ -131,7 +131,12 @@ const inboundWebhookHandler = async (
     const eventType = payload.type || payload.event || payload.event_type;
 
     // Ignore webhook events that are not inbound email received (e.g. email.sent, email.delivered, email.opened)
-    if (typeof eventType === 'string' && eventType && !eventType.includes('received') && !eventType.includes('inbound')) {
+    if (
+      typeof eventType === 'string' &&
+      eventType &&
+      !eventType.includes('received') &&
+      !eventType.includes('inbound')
+    ) {
       response.status(200).json({
         skipped: true,
         reason: `Ignored webhook event type '${eventType}'. Only email.received is processed.`,
@@ -140,7 +145,8 @@ const inboundWebhookHandler = async (
     }
 
     // Deduplicate duplicate webhook deliveries (e.g. Sender.net msg_... or email_id)
-    const eventId = payload.id || payload.data?.id || payload.data?.email_id || payload.data?.message_id;
+    const eventId =
+      payload.id || payload.data?.id || payload.data?.email_id || payload.data?.message_id;
     if (eventId && isDuplicateWebhook(eventId)) {
       response.status(200).json({
         skipped: true,
@@ -160,7 +166,9 @@ const inboundWebhookHandler = async (
     }
 
     const senderEmail = extractEmailAddress(inboundEmail.from);
-    const supportEmail = (process.env.SUPPORT_EMAIL || 'support@rohitis.online').toLowerCase().trim();
+    const supportEmail = (process.env.SUPPORT_EMAIL || 'support@rohitis.online')
+      .toLowerCase()
+      .trim();
 
     // Prevent infinite email loops: Ignore emails sent from our own support address or no-reply addresses
     if (

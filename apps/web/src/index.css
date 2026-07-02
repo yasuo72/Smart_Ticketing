@@ -42,7 +42,10 @@ body {
   text-rendering: optimizeLegibility;
 }
 
-button, input, textarea, select {
+button,
+input,
+textarea,
+select {
   font: inherit;
 }
 
@@ -74,8 +77,12 @@ button, input, textarea, select {
 
 /* Animated gradient shimmer for loading */
 @keyframes shimmer {
-  0% { background-position: -200% 0; }
-  100% { background-position: 200% 0; }
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
 }
 
 .shimmer {
@@ -86,8 +93,14 @@ button, input, textarea, select {
 
 /* Fade in animation */
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(8px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .animate-fade-in {
@@ -96,8 +109,14 @@ button, input, textarea, select {
 
 /* Scale in */
 @keyframes scaleIn {
-  from { opacity: 0; transform: scale(0.95); }
-  to { opacity: 1; transform: scale(1); }
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
 
 .animate-scale-in {
@@ -106,8 +125,13 @@ button, input, textarea, select {
 
 /* Pulse dot */
 @keyframes pulseDot {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.4; }
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.4;
+  }
 }
 .animate-pulse-dot {
   animation: pulseDot 2s ease-in-out infinite;
@@ -115,8 +139,14 @@ button, input, textarea, select {
 
 /* Number counter animation */
 @keyframes countUp {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 .animate-count {
   animation: countUp 0.5s ease-out forwards;
@@ -130,17 +160,25 @@ button, input, textarea, select {
 
 /* Card hover lift */
 .card-hover {
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.15s ease;
 }
 .card-hover:hover {
   transform: translateY(-1px);
-  box-shadow: 0 8px 25px -5px rgba(0,0,0,0.1), 0 4px 10px -3px rgba(0,0,0,0.05);
+  box-shadow:
+    0 8px 25px -5px rgba(0, 0, 0, 0.1),
+    0 4px 10px -3px rgba(0, 0, 0, 0.05);
 }
 
 /* Progress bar animation */
 @keyframes growWidth {
-  from { width: 0%; }
-  to { width: var(--target-width); }
+  from {
+    width: 0%;
+  }
+  to {
+    width: var(--target-width);
+  }
 }
 .progress-bar {
   animation: growWidth 0.8s ease-out forwards;

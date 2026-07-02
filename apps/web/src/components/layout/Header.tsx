@@ -22,7 +22,10 @@ export function Header({ view, onRefresh, isRefreshing }: Props) {
       style={{ background: '#ffffff', borderBottom: '1px solid #e2e8f0', minHeight: '65px' }}
     >
       <div>
-        <h1 className="text-lg font-semibold text-slate-900" style={{ fontFamily: "'Outfit', sans-serif" }}>
+        <h1
+          className="text-lg font-semibold text-slate-900"
+          style={{ fontFamily: "'Outfit', sans-serif" }}
+        >
           {labelFromKey(view)}
         </h1>
         <p className="text-sm text-slate-500 mt-0.5">{viewDescriptions[view]}</p>

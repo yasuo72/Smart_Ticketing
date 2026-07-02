@@ -1,13 +1,4 @@
-import {
-  Bot,
-  LayoutDashboard,
-  LifeBuoy,
-  LogOut,
-  Settings,
-  Ticket,
-  Users,
-  Zap,
-} from 'lucide-react';
+import { Bot, LayoutDashboard, LifeBuoy, LogOut, Settings, Ticket, Users, Zap } from 'lucide-react';
 import type { AuthUser, NavView } from '../../lib/types';
 import { cn, getInitials } from '../../lib/utils';
 
@@ -36,26 +27,43 @@ export function Sidebar({ user, activeView, onNavigate, onLogout }: Props) {
   const visibleNav = navItems.filter((item) => item.roles.includes(user.role));
 
   return (
-    <aside className="flex flex-col h-full w-64 shrink-0" style={{ background: '#0f1117', borderRight: '1px solid #1f2333' }}>
+    <aside
+      className="flex flex-col h-full w-64 shrink-0"
+      style={{ background: '#0f1117', borderRight: '1px solid #1f2333' }}
+    >
       {/* Logo */}
-      <div className="flex items-center gap-3 px-5 py-5" style={{ borderBottom: '1px solid #1f2333' }}>
-        <div className="flex size-9 items-center justify-center rounded-xl" style={{ background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)' }}>
+      <div
+        className="flex items-center gap-3 px-5 py-5"
+        style={{ borderBottom: '1px solid #1f2333' }}
+      >
+        <div
+          className="flex size-9 items-center justify-center rounded-xl"
+          style={{ background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)' }}
+        >
           <LifeBuoy className="size-5 text-white" />
         </div>
         <div>
-          <p className="text-sm font-semibold text-white" style={{ fontFamily: "'Outfit', sans-serif" }}>
+          <p
+            className="text-sm font-semibold text-white"
+            style={{ fontFamily: "'Outfit', sans-serif" }}
+          >
             AI Ticketing
           </p>
           <div className="flex items-center gap-1.5 mt-0.5">
             <span className="size-1.5 rounded-full bg-emerald-400 animate-pulse-dot" />
-            <span className="text-xs" style={{ color: '#64748b' }}>Production</span>
+            <span className="text-xs" style={{ color: '#64748b' }}>
+              Production
+            </span>
           </div>
         </div>
       </div>
 
       {/* Nav */}
       <nav className="flex-1 overflow-y-auto sidebar-scroll px-3 py-4 space-y-1">
-        <p className="px-3 mb-3 text-xs font-semibold uppercase tracking-widest" style={{ color: '#475569' }}>
+        <p
+          className="px-3 mb-3 text-xs font-semibold uppercase tracking-widest"
+          style={{ color: '#475569' }}
+        >
           Navigation
         </p>
         {visibleNav.map((item) => {
@@ -76,26 +84,32 @@ export function Sidebar({ user, activeView, onNavigate, onLogout }: Props) {
                 className={cn('size-4 shrink-0', isActive ? 'text-indigo-400' : 'text-slate-500')}
               />
               {item.label}
-              {isActive && (
-                <span className="ml-auto size-1.5 rounded-full bg-indigo-400" />
-              )}
+              {isActive && <span className="ml-auto size-1.5 rounded-full bg-indigo-400" />}
             </button>
           );
         })}
 
         {/* AI section divider */}
         <div className="pt-4 pb-1">
-          <p className="px-3 mb-3 text-xs font-semibold uppercase tracking-widest" style={{ color: '#475569' }}>
+          <p
+            className="px-3 mb-3 text-xs font-semibold uppercase tracking-widest"
+            style={{ color: '#475569' }}
+          >
             AI Features
           </p>
           <div
             className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm"
-            style={{ background: 'rgba(99,102,241,0.08)', border: '1px solid rgba(99,102,241,0.15)' }}
+            style={{
+              background: 'rgba(99,102,241,0.08)',
+              border: '1px solid rgba(99,102,241,0.15)',
+            }}
           >
             <Bot className="size-4 shrink-0 text-indigo-400" />
             <div>
               <p className="text-xs font-medium text-slate-300">Groq AI Active</p>
-              <p className="text-xs" style={{ color: '#475569' }}>llama-3.3-70b</p>
+              <p className="text-xs" style={{ color: '#475569' }}>
+                llama-3.3-70b
+              </p>
             </div>
             <Zap className="ml-auto size-3 text-amber-400" />
           </div>
@@ -103,7 +117,10 @@ export function Sidebar({ user, activeView, onNavigate, onLogout }: Props) {
       </nav>
 
       {/* Stats strip */}
-      <div className="px-3 py-3 mx-3 mb-3 rounded-lg" style={{ background: '#1a1d27', border: '1px solid #1f2333' }}>
+      <div
+        className="px-3 py-3 mx-3 mb-3 rounded-lg"
+        style={{ background: '#1a1d27', border: '1px solid #1f2333' }}
+      >
         <div className="grid grid-cols-3 gap-2 text-center">
           {[
             { label: 'Open', color: '#60a5fa' },
@@ -112,7 +129,9 @@ export function Sidebar({ user, activeView, onNavigate, onLogout }: Props) {
           ].map((s) => (
             <div key={s.label}>
               <div className="size-1.5 rounded-full mx-auto mb-1" style={{ background: s.color }} />
-              <p className="text-xs" style={{ color: '#475569' }}>{s.label}</p>
+              <p className="text-xs" style={{ color: '#475569' }}>
+                {s.label}
+              </p>
             </div>
           ))}
         </div>
@@ -120,7 +139,10 @@ export function Sidebar({ user, activeView, onNavigate, onLogout }: Props) {
 
       {/* User footer */}
       <div className="px-3 pb-4" style={{ borderTop: '1px solid #1f2333', paddingTop: '12px' }}>
-        <div className="flex items-center gap-3 rounded-lg px-3 py-2.5" style={{ background: '#1a1d27' }}>
+        <div
+          className="flex items-center gap-3 rounded-lg px-3 py-2.5"
+          style={{ background: '#1a1d27' }}
+        >
           <div
             className="flex size-8 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white"
             style={{ background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)' }}
@@ -129,7 +151,9 @@ export function Sidebar({ user, activeView, onNavigate, onLogout }: Props) {
           </div>
           <div className="min-w-0 flex-1">
             <p className="truncate text-sm font-medium text-white">{user.name}</p>
-            <p className="truncate text-xs" style={{ color: '#475569' }}>{user.role}</p>
+            <p className="truncate text-xs" style={{ color: '#475569' }}>
+              {user.role}
+            </p>
           </div>
           <button
             onClick={onLogout}

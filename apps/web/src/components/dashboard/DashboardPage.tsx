@@ -33,12 +33,18 @@ function StatCard({
       <div className="flex items-start justify-between">
         <div>
           <p className="text-sm font-medium text-slate-500">{label}</p>
-          <p className="mt-2 text-3xl font-bold text-slate-900" style={{ fontFamily: "'Outfit', sans-serif" }}>
+          <p
+            className="mt-2 text-3xl font-bold text-slate-900"
+            style={{ fontFamily: "'Outfit', sans-serif" }}
+          >
             {value}
           </p>
           {subLabel && <p className="mt-1 text-xs text-slate-400">{subLabel}</p>}
         </div>
-        <div className="flex size-11 items-center justify-center rounded-xl" style={{ background: color + '15' }}>
+        <div
+          className="flex size-11 items-center justify-center rounded-xl"
+          style={{ background: color + '15' }}
+        >
           <Icon className="size-5" style={{ color }} />
         </div>
       </div>
@@ -46,13 +52,25 @@ function StatCard({
   );
 }
 
-function ProgressBar({ label, value, max, color }: { label: string; value: number; max: number; color: string }) {
+function ProgressBar({
+  label,
+  value,
+  max,
+  color,
+}: {
+  label: string;
+  value: number;
+  max: number;
+  color: string;
+}) {
   const pct = max > 0 ? Math.round((value / max) * 100) : 0;
   return (
     <div className="space-y-1.5">
       <div className="flex items-center justify-between text-sm">
         <span className="font-medium text-slate-700">{labelFromKey(label)}</span>
-        <span className="text-slate-500">{value} <span className="text-slate-400">({pct}%)</span></span>
+        <span className="text-slate-500">
+          {value} <span className="text-slate-400">({pct}%)</span>
+        </span>
       </div>
       <div className="h-2 w-full rounded-full bg-slate-100 overflow-hidden">
         <div
@@ -89,13 +107,14 @@ export function DashboardPage() {
     setError('');
     const res = await apiFetch('/api/dashboard');
     setIsLoading(false);
-    if (!res.ok) { setError('Could not load dashboard.'); return; }
+    if (!res.ok) {
+      setError('Could not load dashboard.');
+      return;
+    }
     setData((await res.json()) as DashboardData);
   }
 
-  const total = data
-    ? Object.values(data.counts.byStatus).reduce((a, b) => a + b, 0)
-    : 0;
+  const total = data ? Object.values(data.counts.byStatus).reduce((a, b) => a + b, 0) : 0;
 
   const categoryEntries = data
     ? Object.entries(data.counts.byCategory).filter(([, v]) => v > 0)
@@ -108,7 +127,9 @@ export function DashboardPage() {
 
       <div className="flex-1 overflow-y-auto p-6 space-y-6">
         {error && (
-          <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>
+          <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+            {error}
+          </div>
         )}
 
         {/* KPI Grid */}
@@ -145,12 +166,7 @@ export function DashboardPage() {
 
         {/* Secondary stats */}
         <div className="grid gap-4 sm:grid-cols-3">
-          <StatCard
-            label="Total Tickets"
-            value={total}
-            icon={BarChart3}
-            color="#8b5cf6"
-          />
+          <StatCard label="Total Tickets" value={total} icon={BarChart3} color="#8b5cf6" />
           <StatCard
             label="Human Resolved"
             value={data?.counts.humanResolved ?? '—'}
@@ -240,18 +256,29 @@ export function DashboardPage() {
 
           <div className="divide-y divide-slate-50">
             {data?.recentActivity.slice(0, 8).map((event) => (
-              <div key={event.id} className="flex items-start gap-4 px-5 py-3 hover:bg-slate-50 transition-colors">
+              <div
+                key={event.id}
+                className="flex items-start gap-4 px-5 py-3 hover:bg-slate-50 transition-colors"
+              >
                 <div
                   className="flex size-8 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white mt-0.5"
-                  style={{ background: event.actor ? 'linear-gradient(135deg,#6366f1,#8b5cf6)' : 'linear-gradient(135deg,#10b981,#06b6d4)' }}
+                  style={{
+                    background: event.actor
+                      ? 'linear-gradient(135deg,#6366f1,#8b5cf6)'
+                      : 'linear-gradient(135deg,#10b981,#06b6d4)',
+                  }}
                 >
                   {event.actor ? getInitials(event.actor.name) : 'AI'}
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="text-sm font-medium text-slate-800 truncate">{event.ticket.subject}</p>
+                  <p className="text-sm font-medium text-slate-800 truncate">
+                    {event.ticket.subject}
+                  </p>
                   <p className="text-xs text-slate-500 mt-0.5">
-                    <span className="font-medium text-slate-600">{event.actor?.name ?? 'AI System'}</span>
-                    {' '}{event.action.replace(/_/g, ' ').toLowerCase()}
+                    <span className="font-medium text-slate-600">
+                      {event.actor?.name ?? 'AI System'}
+                    </span>{' '}
+                    {event.action.replace(/_/g, ' ').toLowerCase()}
                     {event.toValue ? ` → ${event.toValue.replace(/_/g, ' ')}` : ''}
                   </p>
                 </div>

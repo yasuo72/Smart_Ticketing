@@ -1,7 +1,10 @@
 import type { TicketStatus } from '../../lib/types';
 import { cn } from '../../lib/utils';
 
-const config: Record<TicketStatus, { label: string; dot: string; bg: string; text: string; border: string }> = {
+const config: Record<
+  TicketStatus,
+  { label: string; dot: string; bg: string; text: string; border: string }
+> = {
   OPEN: {
     label: 'Open',
     dot: 'bg-blue-500',
@@ -42,7 +45,14 @@ const config: Record<TicketStatus, { label: string; dot: string; bg: string; tex
 export function StatusBadge({ status }: { status: TicketStatus }) {
   const c = config[status] ?? config.OPEN;
   return (
-    <span className={cn('inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium', c.bg, c.text, c.border)}>
+    <span
+      className={cn(
+        'inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium',
+        c.bg,
+        c.text,
+        c.border,
+      )}
+    >
       <span className={cn('size-1.5 rounded-full', c.dot)} />
       {c.label}
     </span>
