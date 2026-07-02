@@ -7,7 +7,10 @@ export const sessionMiddleware = cookieSession({
   name: 'ai-ticketing.sid',
   keys: [sessionSecret],
   httpOnly: true,
-  sameSite: 'lax',
+  // In production the frontend and API are on different domains, so we need
+  // SameSite=None + Secure so the browser actually sends the cookie on
+  // cross-origin requests. In development (localhost) 'lax' is fine.
+  sameSite: isProduction ? 'none' : 'lax',
   secure: isProduction,
   maxAge: 1000 * 60 * 60 * 24 * 7,
 });
