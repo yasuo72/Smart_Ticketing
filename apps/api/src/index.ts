@@ -5,6 +5,11 @@ const port = Number(process.env.PORT ?? 4000);
 const host = process.env.HOST ?? '0.0.0.0';
 const app = createApp();
 
-app.listen(port, host, () => {
+const server = app.listen(port, host, () => {
   console.log(`API listening on http://${host}:${port}`);
+});
+
+server.on('error', (error) => {
+  console.error('Server failed to start', error);
+  process.exit(1);
 });
