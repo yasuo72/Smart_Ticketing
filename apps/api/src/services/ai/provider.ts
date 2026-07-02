@@ -12,21 +12,7 @@ export function getAiProvider(): AiProvider {
     return mockAiProvider;
   }
 
-  const provider = (process.env.AI_PROVIDER || 'groq').toLowerCase();
-
-  if (provider === 'gemini' && process.env.GEMINI_API_KEY) {
-    return geminiProvider;
-  }
-
-  if (process.env.GROQ_API_KEY || provider === 'groq') {
-    return groqProvider;
-  }
-
-  if (process.env.GEMINI_API_KEY) {
-    return geminiProvider;
-  }
-
-  return groqProvider;
+  return hybridAiProvider;
 }
 
 const mockAiProvider: AiProvider = {
@@ -111,7 +97,6 @@ const groqProvider: AiProvider = {
           });
 
           if (response.status === 429 && attempt < 2) {
-            // Groq rate limit - wait 2.5 seconds and retry
             await new Promise((resolve) => setTimeout(resolve, 2500));
             continue;
           }
@@ -119,7 +104,7 @@ const groqProvider: AiProvider = {
           if (!response.ok) {
             const errorText = await response.text();
             lastError = new Error(`Groq request failed (${model}): ${response.status} ${errorText}`);
-            break; // Move to next model
+            break;
           }
 
           const data = (await response.json()) as {
@@ -224,5 +209,41 @@ const geminiProvider: AiProvider = {
     }
 
     throw lastError ?? new Error('Gemini API call failed across all models.');
+  },
+};
+
+const hybridAiProvider: AiProvider = {
+  async generateText(prompt, options = {}) {
+    const providerPref = (process.env.AI_PROVIDER || 'groq').toLowerCase();
+
+    // Prioritize Groq if AI_PROVIDER=groq or GROQ_API_KEY is present
+    if (providerPref === 'groq' || Boolean(process.env.GROQ_API_KEY)) {
+      try {
+        return await groqProvider.generateText(prompt, options);
+      } catch (groqErr) {
+        if (process.env.GEMINI_API_KEY && !process.env.GEMINI_API_KEY.includes('replace-with')) {
+          try {
+            return await geminiProvider.generateText(prompt, options);
+          } catch (geminiErr) {
+            void geminiErr;
+          }
+        }
+        throw groqErr;
+      }
+    }
+
+    // Otherwise try Gemini first
+    try {
+      return await geminiProvider.generateText(prompt, options);
+    } catch (geminiErr) {
+      if (process.env.GROQ_API_KEY && !process.env.GROQ_API_KEY.includes('replace-with')) {
+        try {
+          return await groqProvider.generateText(prompt, options);
+        } catch (groqErr) {
+          void groqErr;
+        }
+      }
+      throw geminiErr;
+    }
   },
 };
