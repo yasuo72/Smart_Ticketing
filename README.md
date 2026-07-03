@@ -303,3 +303,4 @@ The web application is engineered for multi-device perfection across laptops, ta
 ## 📄 License
 
 Distributed under the MIT License. Built with ❤️ for seamless customer support operations.
+:- Rohit Singh (Yasuo72)
