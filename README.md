@@ -2,7 +2,7 @@
 
 <div align="center">
 
-  <img src="docs/images/hero-banner.jpg" alt="Smart Ticketing Hero Banner" width="100%" style="border-radius: 14px; margin-bottom: 20px;" />
+  <img src="docs/images/hero-banner.jpg" alt="Smart Ticketing Hero Banner" width="100%" style="border-radius: 16px; margin-bottom: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.3);" />
 
   <img src="https://img.shields.io/badge/Status-Production%20Ready-emerald?style=for-the-badge&logo=rocket" alt="Status" />
   <img src="https://img.shields.io/badge/Frontend-Vercel%20%7C%20React%2019%20%7C%20Vite-blue?style=for-the-badge&logo=vercel" alt="Frontend" />
@@ -16,6 +16,61 @@
     Designed for lightning-fast resolution, real-time analytics, two-way email synchronization, and mobile-first responsiveness.
   </p>
 
+</div>
+
+---
+
+## 📸 Live Application Showcase & Interface Tour
+
+Experience the clean, modern interface and powerful workflows built into **Smart Ticketing**:
+
+### 📊 1. Real-Time Analytics & Operational Dashboard
+
+> _Live-updating metrics tracking open tickets, resolution distribution, priority breakdown, category counts, and system activity._
+
+<div align="center">
+  <img src="docs/images/admin_dash.png" alt="Admin Operational Dashboard" width="100%" style="border-radius: 12px; border: 1px solid #e2e8f0; box-shadow: 0 8px 24px rgba(0,0,0,0.08);" />
+</div>
+
+<br />
+
+### 💬 2. Smart Ticket Creation & Workspace Chat
+
+> _Submitting support tickets with mandatory email notification confirmation alongside the unified multi-pane chat workspace for agents and customers._
+
+<table width="100%">
+  <tr>
+    <td width="50%" align="center">
+      <b>📝 Customer Ticket Creation Portal</b><br /><br />
+      <img src="docs/images/cutomer_ticketgen.png" alt="Customer Ticket Creation" width="100%" style="border-radius: 10px; border: 1px solid #e2e8f0;" />
+      <p><i>Form with mandatory email notification & priority selection</i></p>
+    </td>
+    <td width="50%" align="center">
+      <b>🧑‍💻 Agent Ticket Workspace & Chat</b><br /><br />
+      <img src="docs/images/admin_ticket.png" alt="Admin Ticket Management" width="100%" style="border-radius: 10px; border: 1px solid #e2e8f0;" />
+      <p><i>Multi-panel ticket queue, status filters & thread replies</i></p>
+    </td>
+  </tr>
+</table>
+
+<br />
+
+### 🤖 3. AI Ticket Summary & Auto-Resolution Engine
+
+> _Real-time AI ticket analysis providing 1-click editable summaries, category classification, and automated reply polishing._
+
+<div align="center">
+  <img src="docs/images/ai_summ.png" alt="AI Ticket Summary" width="90%" style="border-radius: 12px; border: 1px solid #e2e8f0; box-shadow: 0 6px 20px rgba(0,0,0,0.06);" />
+</div>
+
+<br />
+
+### 🛡️ 4. Admin User Management & Role Controls
+
+> _Complete user directory management with role assignment (Customer, Agent, Admin), account search, and safe soft-deactivation._
+
+<div align="center">
+  <img src="docs/images/account_cre_admin.png" alt="Admin User Management" width="100%" style="border-radius: 12px; border: 1px solid #e2e8f0; box-shadow: 0 6px 20px rgba(0,0,0,0.06);" />
 </div>
 
 ---
@@ -54,7 +109,7 @@ When a customer submits a problem—either through the web portal or by simply s
 
 ---
 
-## 🔄 End-to-End Workflow Diagram
+## 🔄 End-to-End Workflow Architecture
 
 Here is how information flows through the system from initial customer request to final resolution:
 
