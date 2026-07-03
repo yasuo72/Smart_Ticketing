@@ -14,6 +14,7 @@ import { apiFetch } from '../../lib/api';
 import type { DashboardData } from '../../lib/types';
 import { formatDuration, formatRelativeTime, getInitials, labelFromKey } from '../../lib/utils';
 import { Header } from '../layout/Header';
+import { Skeleton } from '../ui/Skeleton';
 
 function StatCard({
   label,
@@ -23,7 +24,7 @@ function StatCard({
   subLabel,
 }: {
   label: string;
-  value: string | number;
+  value: React.ReactNode;
   icon: React.ElementType;
   color: string;
   subLabel?: string;
@@ -136,28 +137,30 @@ export function DashboardPage() {
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
           <StatCard
             label="Open Tickets"
-            value={data?.counts.byStatus.OPEN ?? '—'}
+            value={data ? data.counts.byStatus.OPEN : <Skeleton className="h-8 w-12" />}
             icon={TicketCheck}
             color="#3b82f6"
             subLabel="Awaiting response"
           />
           <StatCard
             label="In Progress"
-            value={data?.counts.byStatus.IN_PROGRESS ?? '—'}
+            value={data ? data.counts.byStatus.IN_PROGRESS : <Skeleton className="h-8 w-12" />}
             icon={Activity}
             color="#f59e0b"
             subLabel="Actively being worked"
           />
           <StatCard
             label="AI Resolved"
-            value={data?.counts.autoResolved ?? '—'}
+            value={data ? data.counts.autoResolved : <Skeleton className="h-8 w-12" />}
             icon={Bot}
             color="#6366f1"
             subLabel="Auto-handled by AI"
           />
           <StatCard
             label="Avg Resolution"
-            value={formatDuration(data?.averageResolutionMs ?? null)}
+            value={
+              data ? formatDuration(data.averageResolutionMs) : <Skeleton className="h-8 w-20" />
+            }
             icon={Clock}
             color="#10b981"
             subLabel="Mean time to resolve"
@@ -166,16 +169,21 @@ export function DashboardPage() {
 
         {/* Secondary stats */}
         <div className="grid gap-4 sm:grid-cols-3">
-          <StatCard label="Total Tickets" value={total} icon={BarChart3} color="#8b5cf6" />
+          <StatCard
+            label="Total Tickets"
+            value={data ? total : <Skeleton className="h-8 w-12" />}
+            icon={BarChart3}
+            color="#8b5cf6"
+          />
           <StatCard
             label="Human Resolved"
-            value={data?.counts.humanResolved ?? '—'}
+            value={data ? data.counts.humanResolved : <Skeleton className="h-8 w-12" />}
             icon={CheckCircle2}
             color="#10b981"
           />
           <StatCard
             label="Closed"
-            value={data?.counts.byStatus.CLOSED ?? '—'}
+            value={data ? data.counts.byStatus.CLOSED : <Skeleton className="h-8 w-12" />}
             icon={TrendingUp}
             color="#64748b"
           />
@@ -206,7 +214,17 @@ export function DashboardPage() {
                   />
                 ))
               ) : (
-                <p className="text-sm text-slate-400 py-4 text-center">Loading...</p>
+                <div className="space-y-4 py-2">
+                  {Array.from({ length: 4 }).map((_, i) => (
+                    <div key={i} className="space-y-2">
+                      <div className="flex justify-between">
+                        <Skeleton className="h-3 w-16" />
+                        <Skeleton className="h-3 w-12" />
+                      </div>
+                      <Skeleton className="h-2 w-full rounded-full" />
+                    </div>
+                  ))}
+                </div>
               )}
             </div>
           </div>
@@ -223,20 +241,32 @@ export function DashboardPage() {
               </div>
             </div>
             <div className="space-y-3">
-              {categoryEntries.length > 0 ? (
-                categoryEntries.map(([cat, count], i) => (
-                  <ProgressBar
-                    key={cat}
-                    label={cat}
-                    value={count}
-                    max={categoryTotal}
-                    color={categoryColors[i % categoryColors.length]}
-                  />
-                ))
+              {data ? (
+                categoryEntries.length > 0 ? (
+                  categoryEntries.map(([cat, count], i) => (
+                    <ProgressBar
+                      key={cat}
+                      label={cat}
+                      value={count}
+                      max={categoryTotal}
+                      color={categoryColors[i % categoryColors.length]}
+                    />
+                  ))
+                ) : (
+                  <p className="text-sm text-slate-400 py-4 text-center">No category data yet.</p>
+                )
               ) : (
-                <p className="text-sm text-slate-400 py-4 text-center">
-                  {isLoading ? 'Loading...' : 'No category data yet.'}
-                </p>
+                <div className="space-y-4 py-2">
+                  {Array.from({ length: 4 }).map((_, i) => (
+                    <div key={i} className="space-y-2">
+                      <div className="flex justify-between">
+                        <Skeleton className="h-3 w-20" />
+                        <Skeleton className="h-3 w-12" />
+                      </div>
+                      <Skeleton className="h-2 w-full rounded-full" />
+                    </div>
+                  ))}
+                </div>
               )}
             </div>
           </div>
@@ -255,46 +285,57 @@ export function DashboardPage() {
           </div>
 
           <div className="divide-y divide-slate-50">
-            {data?.recentActivity.slice(0, 8).map((event) => (
-              <div
-                key={event.id}
-                className="flex items-start gap-4 px-5 py-3 hover:bg-slate-50 transition-colors"
-              >
-                <div
-                  className="flex size-8 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white mt-0.5"
-                  style={{
-                    background: event.actor
-                      ? 'linear-gradient(135deg,#6366f1,#8b5cf6)'
-                      : 'linear-gradient(135deg,#10b981,#06b6d4)',
-                  }}
-                >
-                  {event.actor ? getInitials(event.actor.name) : 'AI'}
+            {data ? (
+              data.recentActivity.length === 0 ? (
+                <div className="flex flex-col items-center py-10 text-center">
+                  <Activity className="size-8 text-slate-300 mb-2" />
+                  <p className="text-sm text-slate-400">No recent activity yet.</p>
                 </div>
-                <div className="min-w-0 flex-1">
-                  <p className="text-sm font-medium text-slate-800 truncate">
-                    {event.ticket.subject}
-                  </p>
-                  <p className="text-xs text-slate-500 mt-0.5">
-                    <span className="font-medium text-slate-600">
-                      {event.actor?.name ?? 'AI System'}
-                    </span>{' '}
-                    {event.action.replace(/_/g, ' ').toLowerCase()}
-                    {event.toValue ? ` → ${event.toValue.replace(/_/g, ' ')}` : ''}
-                  </p>
+              ) : (
+                data.recentActivity.slice(0, 8).map((event) => (
+                  <div
+                    key={event.id}
+                    className="flex items-start gap-4 px-5 py-3 hover:bg-slate-50 transition-colors"
+                  >
+                    <div
+                      className="flex size-8 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white mt-0.5"
+                      style={{
+                        background: event.actor
+                          ? 'linear-gradient(135deg,#6366f1,#8b5cf6)'
+                          : 'linear-gradient(135deg,#10b981,#06b6d4)',
+                      }}
+                    >
+                      {event.actor ? getInitials(event.actor.name) : 'AI'}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-medium text-slate-800 truncate">
+                        {event.ticket.subject}
+                      </p>
+                      <p className="text-xs text-slate-500 mt-0.5">
+                        <span className="font-medium text-slate-600">
+                          {event.actor?.name ?? 'AI System'}
+                        </span>{' '}
+                        {event.action.replace(/_/g, ' ').toLowerCase()}
+                        {event.toValue ? ` → ${event.toValue.replace(/_/g, ' ')}` : ''}
+                      </p>
+                    </div>
+                    <span className="shrink-0 text-xs text-slate-400 mt-0.5">
+                      {formatRelativeTime(event.createdAt)}
+                    </span>
+                  </div>
+                ))
+              )
+            ) : (
+              Array.from({ length: 5 }).map((_, i) => (
+                <div key={i} className="flex items-center gap-4 px-5 py-3">
+                  <Skeleton className="size-8 rounded-full shrink-0" />
+                  <div className="flex-1 space-y-1.5 min-w-0">
+                    <Skeleton className="h-3.5 w-3/4" />
+                    <Skeleton className="h-3 w-1/2" />
+                  </div>
+                  <Skeleton className="h-3 w-12 shrink-0" />
                 </div>
-                <span className="shrink-0 text-xs text-slate-400 mt-0.5">
-                  {formatRelativeTime(event.createdAt)}
-                </span>
-              </div>
-            ))}
-
-            {(!data || data.recentActivity.length === 0) && (
-              <div className="flex flex-col items-center py-10 text-center">
-                <Activity className="size-8 text-slate-300 mb-2" />
-                <p className="text-sm text-slate-400">
-                  {isLoading ? 'Loading activity...' : 'No recent activity yet.'}
-                </p>
-              </div>
+              ))
             )}
           </div>
         </div>

@@ -44,32 +44,68 @@ export function App() {
   // Loading skeleton
   if (!sessionChecked) {
     return (
-      <div
-        className="flex min-h-screen items-center justify-center"
-        style={{ background: '#f1f5f9' }}
-      >
-        <div className="flex flex-col items-center gap-3">
-          <div
-            className="flex size-12 items-center justify-center rounded-2xl shadow-lg"
-            style={{ background: 'linear-gradient(135deg,#6366f1,#8b5cf6)' }}
-          >
-            <svg className="size-6 animate-spin text-white" fill="none" viewBox="0 0 24 24">
-              <circle
-                className="opacity-25"
-                cx="12"
-                cy="12"
-                r="10"
-                stroke="currentColor"
-                strokeWidth="4"
-              />
-              <path
-                className="opacity-75"
-                fill="currentColor"
-                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
-              />
-            </svg>
+      <div className="flex h-screen overflow-hidden bg-slate-50">
+        {/* Mock Sidebar Skeleton */}
+        <aside className="flex flex-col h-full w-64 shrink-0 bg-[#0f1117] border-r border-[#1f2333]">
+          <div className="flex items-center gap-3 px-5 py-5 border-b border-[#1f2333]">
+            <div className="size-9 rounded-xl bg-slate-800 shimmer" />
+            <div className="space-y-1.5 flex-1">
+              <div className="h-3 w-24 bg-slate-800 rounded shimmer" />
+              <div className="h-2 w-16 bg-slate-800 rounded shimmer" />
+            </div>
           </div>
-          <p className="text-sm font-medium text-slate-500">Loading workspace...</p>
+          <div className="flex-1 px-3 py-4 space-y-4">
+            <div className="space-y-2">
+              <div className="h-2 w-16 bg-slate-800 rounded shimmer ml-3 mb-2" />
+              <div className="h-9 w-full bg-slate-800/50 rounded-lg shimmer" />
+              <div className="h-9 w-full bg-slate-800/50 rounded-lg shimmer" />
+              <div className="h-9 w-full bg-slate-800/50 rounded-lg shimmer" />
+            </div>
+          </div>
+        </aside>
+
+        {/* Mock Content Skeleton */}
+        <div className="flex-1 flex flex-col overflow-hidden">
+          {/* Header Skeleton */}
+          <header
+            className="flex items-center justify-between px-6 py-4 bg-white border-b border-slate-200"
+            style={{ minHeight: '65px' }}
+          >
+            <div className="space-y-1.5">
+              <div className="h-4 w-32 bg-slate-200 rounded shimmer" />
+              <div className="h-3 w-48 bg-slate-200 rounded shimmer" />
+            </div>
+            <div className="flex items-center gap-3">
+              <div className="h-9 w-32 bg-slate-200 rounded-lg shimmer hidden md:block" />
+              <div className="size-9 bg-slate-200 rounded-lg shimmer" />
+            </div>
+          </header>
+
+          {/* Main workspace area skeleton */}
+          <div className="flex-1 p-6 space-y-6 overflow-y-auto">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="h-32 bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-3">
+                <div className="h-3.5 w-24 bg-slate-200 rounded shimmer" />
+                <div className="h-8 w-16 bg-slate-200 rounded shimmer" />
+              </div>
+              <div className="h-32 bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-3">
+                <div className="h-3.5 w-24 bg-slate-200 rounded shimmer" />
+                <div className="h-8 w-16 bg-slate-200 rounded shimmer" />
+              </div>
+              <div className="h-32 bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-3">
+                <div className="h-3.5 w-24 bg-slate-200 rounded shimmer" />
+                <div className="h-8 w-16 bg-slate-200 rounded shimmer" />
+              </div>
+            </div>
+            <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-4">
+              <div className="h-4 w-48 bg-slate-200 rounded shimmer" />
+              <div className="space-y-2">
+                <div className="h-3 w-full bg-slate-100/50 rounded shimmer" />
+                <div className="h-3 w-5/6 bg-slate-100/50 rounded shimmer" />
+                <div className="h-3 w-4/6 bg-slate-100/50 rounded shimmer" />
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     );

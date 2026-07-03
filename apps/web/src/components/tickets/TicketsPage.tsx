@@ -18,6 +18,7 @@ import { cn, formatFullDate, formatRelativeTime, getInitials } from '../../lib/u
 import { Header } from '../layout/Header';
 import { PriorityBadge } from './PriorityBadge';
 import { StatusBadge } from './StatusBadge';
+import { Skeleton } from '../ui/Skeleton';
 
 const statuses: TicketStatus[] = ['OPEN', 'IN_PROGRESS', 'AUTO_RESOLVED', 'RESOLVED', 'CLOSED'];
 const priorities: Priority[] = ['LOW', 'MEDIUM', 'HIGH', 'URGENT'];
@@ -40,6 +41,7 @@ export function TicketsPage({ user }: { user: AuthUser }) {
   const [subject, setSubject] = useState('');
   const [description, setDescription] = useState('');
   const [newPriority, setNewPriority] = useState<Priority>('MEDIUM');
+  const [email, setEmail] = useState(user.email);
   const [replyBody, setReplyBody] = useState('');
   const [polishedReply, setPolishedReply] = useState('');
   const [isInternal, setIsInternal] = useState(false);
@@ -48,12 +50,19 @@ export function TicketsPage({ user }: { user: AuthUser }) {
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [error, setError] = useState('');
 
+  const [editingSummary, setEditingSummary] = useState(false);
+  const [summaryDraft, setSummaryDraft] = useState('');
+
   const selected = tickets.find((t) => t.id === selectedId) ?? tickets[0] ?? null;
 
   const filtered = tickets.filter((t) => {
     if (search && !t.subject.toLowerCase().includes(search.toLowerCase())) return false;
     return true;
   });
+
+  // Derive current summary value from selected ticket (no effect needed)
+  const summaryValue = editingSummary ? summaryDraft : (selected?.aiSummary ?? '');
+  const setSummaryValue = (v: string) => setSummaryDraft(v);
 
   useEffect(() => {
     void loadTickets();
@@ -82,7 +91,7 @@ export function TicketsPage({ user }: { user: AuthUser }) {
     setError('');
     const res = await apiFetch('/api/tickets', {
       method: 'POST',
-      body: JSON.stringify({ subject, description, priority: newPriority }),
+      body: JSON.stringify({ subject, description, priority: newPriority, email }),
     });
     const data = (await res.json().catch(() => ({}))) as { ticket?: Ticket; error?: string };
     if (!res.ok || !data.ticket) {
@@ -248,6 +257,24 @@ export function TicketsPage({ user }: { user: AuthUser }) {
                   <X className="size-4" />
                 </button>
               </div>
+              <div className="space-y-1">
+                <label
+                  htmlFor="ticket-email"
+                  className="block text-xs font-semibold text-slate-500"
+                >
+                  Notification Email <span className="text-red-500">*</span>
+                </label>
+                <input
+                  required
+                  id="ticket-email"
+                  type="email"
+                  placeholder="your-email@example.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="h-9 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm outline-none focus:border-indigo-400 focus:ring-1 focus:ring-indigo-100"
+                />
+                <p className="text-[10px] text-slate-400">Replies and updates will be sent here.</p>
+              </div>
               <input
                 required
                 type="text"
@@ -293,57 +320,69 @@ export function TicketsPage({ user }: { user: AuthUser }) {
 
           {/* Ticket list items */}
           <div className="flex-1 overflow-y-auto divide-y divide-slate-50">
-            {filtered.map((ticket) => {
-              const isSelected = selected?.id === ticket.id;
-              return (
-                <button
-                  key={ticket.id}
-                  type="button"
-                  onClick={() => setSelectedId(ticket.id)}
-                  className={cn(
-                    'w-full text-left px-4 py-3 transition-all border-l-2 cursor-pointer',
-                    isSelected
-                      ? 'bg-indigo-50 border-l-indigo-500'
-                      : 'bg-white hover:bg-slate-50 border-l-transparent',
-                  )}
-                  style={!isSelected ? { borderLeftColor: statusBorderColor[ticket.status] } : {}}
-                >
-                  <div className="flex items-start justify-between gap-2">
-                    <p
-                      className={cn(
-                        'text-sm font-medium truncate',
-                        isSelected ? 'text-indigo-900' : 'text-slate-800',
-                      )}
-                    >
-                      {ticket.subject}
-                    </p>
-                    <PriorityBadge priority={ticket.priority} />
+            {isLoading ? (
+              Array.from({ length: 5 }).map((_, i) => (
+                <div key={i} className="w-full px-4 py-3 space-y-2.5">
+                  <div className="flex items-center justify-between">
+                    <Skeleton className="h-4 w-32" />
+                    <Skeleton className="h-4 w-12" />
                   </div>
-                  <p className="mt-1 text-xs text-slate-500 truncate">
-                    {ticket.aiSummary ?? ticket.description}
-                  </p>
-                  <div className="mt-2 flex items-center gap-1.5 flex-wrap">
-                    <StatusBadge status={ticket.status} />
-                    {ticket.category && (
-                      <span className="inline-flex items-center rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-xs text-slate-500">
-                        {ticket.category}
-                      </span>
-                    )}
-                    <span className="ml-auto text-xs text-slate-400">
-                      {formatRelativeTime(ticket.updatedAt)}
-                    </span>
+                  <Skeleton className="h-3 w-48" />
+                  <div className="flex items-center justify-between">
+                    <Skeleton className="h-4.5 w-16 rounded-full" />
+                    <Skeleton className="h-3 w-12" />
                   </div>
-                </button>
-              );
-            })}
-
-            {filtered.length === 0 && (
+                </div>
+              ))
+            ) : filtered.length === 0 ? (
               <div className="flex flex-col items-center py-12 text-center">
                 <MessageSquare className="size-8 text-slate-300 mb-2" />
-                <p className="text-sm text-slate-400">
-                  {isLoading ? 'Loading tickets...' : 'No tickets found.'}
-                </p>
+                <p className="text-sm text-slate-400">No tickets found.</p>
               </div>
+            ) : (
+              filtered.map((ticket) => {
+                const isSelected = selected?.id === ticket.id;
+                return (
+                  <button
+                    key={ticket.id}
+                    type="button"
+                    onClick={() => setSelectedId(ticket.id)}
+                    className={cn(
+                      'w-full text-left px-4 py-3 transition-all border-l-2 cursor-pointer',
+                      isSelected
+                        ? 'bg-indigo-50 border-l-indigo-500'
+                        : 'bg-white hover:bg-slate-50 border-l-transparent',
+                    )}
+                    style={!isSelected ? { borderLeftColor: statusBorderColor[ticket.status] } : {}}
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <p
+                        className={cn(
+                          'text-sm font-medium truncate',
+                          isSelected ? 'text-indigo-900' : 'text-slate-800',
+                        )}
+                      >
+                        {ticket.subject}
+                      </p>
+                      <PriorityBadge priority={ticket.priority} />
+                    </div>
+                    <p className="mt-1 text-xs text-slate-500 truncate">
+                      {ticket.aiSummary ?? ticket.description}
+                    </p>
+                    <div className="mt-2 flex items-center gap-1.5 flex-wrap">
+                      <StatusBadge status={ticket.status} />
+                      {ticket.category && (
+                        <span className="inline-flex items-center rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-xs text-slate-500">
+                          {ticket.category}
+                        </span>
+                      )}
+                      <span className="ml-auto text-xs text-slate-400">
+                        {formatRelativeTime(ticket.updatedAt)}
+                      </span>
+                    </div>
+                  </button>
+                );
+              })
             )}
           </div>
         </div>
@@ -446,12 +485,61 @@ export function TicketsPage({ user }: { user: AuthUser }) {
                 <p className="text-sm text-slate-700 whitespace-pre-wrap leading-relaxed">
                   {selected.description}
                 </p>
-                {selected.aiSummary && (
-                  <div className="mt-3 flex items-start gap-2 rounded-lg bg-indigo-50 border border-indigo-100 px-3 py-2">
-                    <Bot className="size-3.5 text-indigo-500 mt-0.5 shrink-0" />
-                    <p className="text-xs text-indigo-700 leading-relaxed">{selected.aiSummary}</p>
+                <div className="mt-4 pt-3 border-t border-slate-100">
+                  <div className="flex items-center justify-between mb-1.5">
+                    <p className="text-xs font-semibold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+                      <Bot className="size-3.5 text-indigo-500" />
+                      Summary
+                    </p>
+                    {isStaff && !editingSummary && (
+                      <button
+                        onClick={() => setEditingSummary(true)}
+                        className="text-xs text-indigo-600 hover:text-indigo-800 font-medium transition cursor-pointer"
+                      >
+                        Edit
+                      </button>
+                    )}
                   </div>
-                )}
+
+                  {editingSummary ? (
+                    <div className="space-y-2">
+                      <textarea
+                        value={summaryValue}
+                        onChange={(e) => setSummaryValue(e.target.value)}
+                        placeholder="Write a brief summary of this ticket..."
+                        rows={2}
+                        className="w-full text-xs rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 outline-none focus:border-indigo-400 focus:bg-white resize-none"
+                      />
+                      <div className="flex justify-end gap-1.5">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setEditingSummary(false);
+                            setSummaryValue(selected.aiSummary ?? '');
+                          }}
+                          className="px-2 py-1 rounded text-[11px] font-medium text-slate-500 hover:bg-slate-100 transition cursor-pointer"
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            void updateTicket(selected.id, { aiSummary: summaryValue });
+                            setEditingSummary(false);
+                          }}
+                          className="px-2 py-1 rounded text-[11px] font-medium text-white transition cursor-pointer"
+                          style={{ background: '#6366f1' }}
+                        >
+                          Save
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <p className="text-xs text-slate-600 leading-relaxed italic">
+                      {selected.aiSummary || 'No summary has been generated or written yet.'}
+                    </p>
+                  )}
+                </div>
               </div>
 
               {/* Thread */}

@@ -20,6 +20,7 @@ export type Ticket = {
   priority: Priority;
   category: string | null;
   aiSummary: string | null;
+  notificationEmail: string | null;
   customer: Pick<AuthUser, 'id' | 'name' | 'email'>;
   agent: Pick<AuthUser, 'id' | 'name' | 'email'> | null;
   replies: TicketReply[];

@@ -91,7 +91,10 @@ test('agent can assign, polish, reply, and resolve a customer ticket', async ({ 
   await page.getByRole('button', { name: 'Assign to me' }).click();
   await expect(page.getByTestId('ticket-detail').getByText('E2E Agent')).toBeVisible();
 
-  await page.getByTestId('reply-form').getByPlaceholder('Write your reply...').fill('we are checking this soon');
+  await page
+    .getByTestId('reply-form')
+    .getByPlaceholder('Write your reply...')
+    .fill('we are checking this soon');
   await page.getByRole('button', { name: 'Polish with AI' }).click();
   await expect(page.getByText('AI Polished Reply')).toBeVisible();
   await page.getByRole('button', { name: 'Use this →' }).click();

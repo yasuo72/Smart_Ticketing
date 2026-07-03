@@ -23,6 +23,7 @@ import { apiFetch } from '../../lib/api';
 import type { AuthUser, Priority, Role, TicketStatus } from '../../lib/types';
 import { cn, formatFullDate, formatRelativeTime, getInitials } from '../../lib/utils';
 import { Header } from '../layout/Header';
+import { Skeleton } from '../ui/Skeleton';
 import { StatusBadge } from '../tickets/StatusBadge';
 import { PriorityBadge } from '../tickets/PriorityBadge';
 
@@ -565,103 +566,127 @@ export function AdminPage() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-50">
-                    {users.map((u) => {
-                      const rb = roleBadge[u.role];
-                      return (
-                        <tr key={u.id} className="hover:bg-slate-50 transition-colors group">
-                          <td className="px-5 py-3.5">
-                            <div className="flex items-center gap-3">
-                              <div
-                                className="flex size-9 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white"
-                                style={{
-                                  background:
-                                    u.role === 'ADMIN'
-                                      ? 'linear-gradient(135deg,#ef4444,#dc2626)'
-                                      : u.role === 'AGENT'
-                                        ? 'linear-gradient(135deg,#6366f1,#4f46e5)'
-                                        : 'linear-gradient(135deg,#3b82f6,#06b6d4)',
-                                }}
-                              >
-                                {getInitials(u.name)}
+                    {isLoadingUsers
+                      ? Array.from({ length: 5 }).map((_, i) => (
+                          <tr key={i} className="hover:bg-slate-50 transition-colors">
+                            <td className="px-5 py-3.5">
+                              <div className="flex items-center gap-3">
+                                <Skeleton className="size-9 rounded-full shrink-0" />
+                                <div className="space-y-1.5 flex-1 min-w-0">
+                                  <Skeleton className="h-4 w-28" />
+                                  <Skeleton className="h-3 w-40" />
+                                </div>
                               </div>
-                              <div className="min-w-0">
-                                <p className="font-medium text-slate-900 truncate">{u.name}</p>
-                                <p className="text-xs text-slate-500 truncate">{u.email}</p>
-                              </div>
-                            </div>
-                          </td>
-                          <td className="px-4 py-3.5">
-                            <select
-                              value={u.role}
-                              onChange={(e) =>
-                                void updateUser(u.id, { role: e.target.value as Role })
-                              }
-                              className={cn(
-                                'rounded-full border px-2.5 py-1 text-xs font-semibold outline-none cursor-pointer transition',
-                                rb.bg,
-                                rb.text,
-                                rb.border,
-                              )}
-                            >
-                              <option value="CUSTOMER">Customer</option>
-                              <option value="AGENT">Agent</option>
-                              <option value="ADMIN">Admin</option>
-                            </select>
-                          </td>
-                          <td className="px-4 py-3.5">
-                            <select
-                              value={String(u.isActive)}
-                              onChange={(e) =>
-                                void updateUser(u.id, { isActive: e.target.value === 'true' })
-                              }
-                              className={cn(
-                                'rounded-full border px-2.5 py-1 text-xs font-semibold outline-none cursor-pointer',
-                                u.isActive
-                                  ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
-                                  : 'bg-slate-100 text-slate-500 border-slate-200',
-                              )}
-                            >
-                              <option value="true">● Active</option>
-                              <option value="false">○ Inactive</option>
-                            </select>
-                          </td>
-                          <td className="px-4 py-3.5 text-xs text-slate-500">
-                            {formatRelativeTime(u.createdAt)}
-                          </td>
-                          <td className="px-4 py-3.5">
-                            <div className="flex items-center justify-end gap-2">
-                              {u.isActive ? (
-                                <button
-                                  onClick={() => setDeleteUser(u)}
-                                  className="flex items-center gap-1.5 rounded-lg border border-red-200 bg-red-50 px-2.5 py-1.5 text-xs font-medium text-red-700 transition hover:bg-red-100 cursor-pointer"
+                            </td>
+                            <td className="px-4 py-3.5">
+                              <Skeleton className="h-6 w-20 rounded-full" />
+                            </td>
+                            <td className="px-4 py-3.5">
+                              <Skeleton className="h-6 w-16 rounded-full" />
+                            </td>
+                            <td className="px-4 py-3.5">
+                              <Skeleton className="h-4 w-24" />
+                            </td>
+                            <td className="px-4 py-3.5 text-right">
+                              <Skeleton className="h-8 w-24 rounded-lg ml-auto" />
+                            </td>
+                          </tr>
+                        ))
+                      : users.map((u) => {
+                          const rb = roleBadge[u.role];
+                          return (
+                            <tr key={u.id} className="hover:bg-slate-50 transition-colors group">
+                              <td className="px-5 py-3.5">
+                                <div className="flex items-center gap-3">
+                                  <div
+                                    className="flex size-9 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white"
+                                    style={{
+                                      background:
+                                        u.role === 'ADMIN'
+                                          ? 'linear-gradient(135deg,#ef4444,#dc2626)'
+                                          : u.role === 'AGENT'
+                                            ? 'linear-gradient(135deg,#6366f1,#4f46e5)'
+                                            : 'linear-gradient(135deg,#3b82f6,#06b6d4)',
+                                    }}
+                                  >
+                                    {getInitials(u.name)}
+                                  </div>
+                                  <div className="min-w-0">
+                                    <p className="font-medium text-slate-900 truncate">{u.name}</p>
+                                    <p className="text-xs text-slate-500 truncate">{u.email}</p>
+                                  </div>
+                                </div>
+                              </td>
+                              <td className="px-4 py-3.5">
+                                <select
+                                  value={u.role}
+                                  onChange={(e) =>
+                                    void updateUser(u.id, { role: e.target.value as Role })
+                                  }
+                                  className={cn(
+                                    'rounded-full border px-2.5 py-1 text-xs font-semibold outline-none cursor-pointer transition',
+                                    rb.bg,
+                                    rb.text,
+                                    rb.border,
+                                  )}
                                 >
-                                  <Ban className="size-3.5" />
-                                  Deactivate
-                                </button>
-                              ) : (
-                                <button
-                                  onClick={() => void updateUser(u.id, { isActive: true })}
-                                  className="flex items-center gap-1.5 rounded-lg border border-emerald-200 bg-emerald-50 px-2.5 py-1.5 text-xs font-medium text-emerald-700 transition hover:bg-emerald-100 cursor-pointer"
+                                  <option value="CUSTOMER">Customer</option>
+                                  <option value="AGENT">Agent</option>
+                                  <option value="ADMIN">Admin</option>
+                                </select>
+                              </td>
+                              <td className="px-4 py-3.5">
+                                <select
+                                  value={String(u.isActive)}
+                                  onChange={(e) =>
+                                    void updateUser(u.id, { isActive: e.target.value === 'true' })
+                                  }
+                                  className={cn(
+                                    'rounded-full border px-2.5 py-1 text-xs font-semibold outline-none cursor-pointer',
+                                    u.isActive
+                                      ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                                      : 'bg-slate-100 text-slate-500 border-slate-200',
+                                  )}
                                 >
-                                  <CheckCircle className="size-3.5" />
-                                  Reactivate
-                                </button>
-                              )}
-                            </div>
-                          </td>
-                        </tr>
-                      );
-                    })}
+                                  <option value="true">● Active</option>
+                                  <option value="false">○ Inactive</option>
+                                </select>
+                              </td>
+                              <td className="px-4 py-3.5 text-xs text-slate-500">
+                                {formatRelativeTime(u.createdAt)}
+                              </td>
+                              <td className="px-4 py-3.5">
+                                <div className="flex items-center justify-end gap-2">
+                                  {u.isActive ? (
+                                    <button
+                                      onClick={() => setDeleteUser(u)}
+                                      className="flex items-center gap-1.5 rounded-lg border border-red-200 bg-red-50 px-2.5 py-1.5 text-xs font-medium text-red-700 transition hover:bg-red-100 cursor-pointer"
+                                    >
+                                      <Ban className="size-3.5" />
+                                      Deactivate
+                                    </button>
+                                  ) : (
+                                    <button
+                                      onClick={() => void updateUser(u.id, { isActive: true })}
+                                      className="flex items-center gap-1.5 rounded-lg border border-emerald-200 bg-emerald-50 px-2.5 py-1.5 text-xs font-medium text-emerald-700 transition hover:bg-emerald-100 cursor-pointer"
+                                    >
+                                      <CheckCircle className="size-3.5" />
+                                      Reactivate
+                                    </button>
+                                  )}
+                                </div>
+                              </td>
+                            </tr>
+                          );
+                        })}
                   </tbody>
                 </table>
               </div>
 
-              {users.length === 0 && (
+              {users.length === 0 && !isLoadingUsers && (
                 <div className="flex flex-col items-center py-12 text-center">
                   <Users className="size-8 text-slate-300 mb-2" />
-                  <p className="text-sm text-slate-400">
-                    {isLoadingUsers ? 'Loading users...' : 'No users found.'}
-                  </p>
+                  <p className="text-sm text-slate-400">No users found.</p>
                 </div>
               )}
 
@@ -736,110 +761,131 @@ export function AdminPage() {
 
               {/* Tickets table */}
               <div className="divide-y divide-slate-50">
-                {filteredTickets.map((ticket) => {
-                  const isExpanded = expandedTicketId === ticket.id;
-                  return (
-                    <div key={ticket.id} className="group">
-                      <div
-                        className="flex items-start gap-4 px-5 py-4 hover:bg-slate-50 transition-colors cursor-pointer"
-                        onClick={() => setExpandedTicketId(isExpanded ? null : ticket.id)}
-                      >
-                        {/* Expand chevron */}
-                        <ChevronDown
-                          className={cn(
-                            'size-4 mt-0.5 text-slate-400 transition-transform shrink-0',
-                            isExpanded && 'rotate-180',
-                          )}
-                        />
-
-                        {/* Customer avatar */}
-                        <div
-                          className="flex size-8 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white"
-                          style={{ background: 'linear-gradient(135deg,#3b82f6,#06b6d4)' }}
-                        >
-                          {getInitials(ticket.customer.name)}
-                        </div>
-
-                        {/* Main info */}
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-start justify-between gap-3 flex-wrap">
-                            <div className="min-w-0">
-                              <p className="font-semibold text-slate-900 truncate">
-                                {ticket.subject}
-                              </p>
-                              <p className="text-xs text-slate-500 mt-0.5 truncate">
-                                {ticket.customer.name} ({ticket.customer.email})
-                              </p>
-                            </div>
-                            <div className="flex items-center gap-2 shrink-0">
-                              <StatusBadge status={ticket.status} />
-                              <PriorityBadge priority={ticket.priority} />
-                            </div>
+                {isLoadingTickets ? (
+                  Array.from({ length: 5 }).map((_, i) => (
+                    <div key={i} className="flex items-start gap-4 px-5 py-4">
+                      <Skeleton className="size-4 rounded shrink-0 mt-0.5" />
+                      <Skeleton className="size-8 rounded-full shrink-0" />
+                      <div className="flex-1 min-w-0 space-y-2">
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="space-y-1.5 min-w-0 flex-1">
+                            <Skeleton className="h-4 w-48" />
+                            <Skeleton className="h-3 w-36" />
                           </div>
-                          <div className="flex flex-wrap items-center gap-3 mt-2 text-xs text-slate-500">
-                            {ticket.category && (
-                              <span className="flex items-center gap-1">
-                                <Tag className="size-3" />
-                                {ticket.category}
-                              </span>
-                            )}
-                            <span className="flex items-center gap-1">
-                              <MessageSquare className="size-3" />
-                              {ticket._count.replies} replies
-                            </span>
-                            <span className="flex items-center gap-1">
-                              <Eye className="size-3" />
-                              {ticket.agent ? `Assigned: ${ticket.agent.name}` : 'Unassigned'}
-                            </span>
-                            <span>{formatFullDate(ticket.createdAt)}</span>
+                          <div className="flex gap-2 shrink-0">
+                            <Skeleton className="h-5 w-16 rounded-full" />
+                            <Skeleton className="h-5 w-14 rounded-full" />
                           </div>
                         </div>
-
-                        {/* Actions */}
-                        <div
-                          className="flex items-center gap-2 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity"
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          <button
-                            onClick={() => setDeleteTicket(ticket)}
-                            className="flex items-center gap-1.5 rounded-lg border border-red-200 bg-red-50 px-2.5 py-1.5 text-xs font-medium text-red-700 transition hover:bg-red-100 cursor-pointer"
-                          >
-                            <Trash2 className="size-3.5" />
-                            Delete
-                          </button>
+                        <div className="flex gap-4">
+                          <Skeleton className="h-3 w-24" />
+                          <Skeleton className="h-3 w-20" />
                         </div>
                       </div>
-
-                      {/* Expanded row: description */}
-                      {isExpanded && (
-                        <div className="border-t border-slate-50 bg-slate-50 px-16 py-4 animate-fade-in">
-                          <p className="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">
-                            Description
-                          </p>
-                          <p className="text-sm text-slate-700 whitespace-pre-wrap leading-relaxed">
-                            {ticket.description}
-                          </p>
-                          <div className="mt-3 flex gap-2">
-                            <span className="text-xs text-slate-400">
-                              ID: <span className="font-mono text-slate-600">{ticket.id}</span>
-                            </span>
-                            <span className="text-xs text-slate-400">
-                              Updated: {formatRelativeTime(ticket.updatedAt)}
-                            </span>
-                          </div>
-                        </div>
-                      )}
                     </div>
-                  );
-                })}
-
-                {filteredTickets.length === 0 && (
+                  ))
+                ) : filteredTickets.length === 0 ? (
                   <div className="flex flex-col items-center py-12 text-center">
                     <Ticket className="size-8 text-slate-300 mb-2" />
-                    <p className="text-sm text-slate-400">
-                      {isLoadingTickets ? 'Loading tickets...' : 'No tickets found.'}
-                    </p>
+                    <p className="text-sm text-slate-400">No tickets found.</p>
                   </div>
+                ) : (
+                  filteredTickets.map((ticket) => {
+                    const isExpanded = expandedTicketId === ticket.id;
+                    return (
+                      <div key={ticket.id} className="group">
+                        <div
+                          className="flex items-start gap-4 px-5 py-4 hover:bg-slate-50 transition-colors cursor-pointer"
+                          onClick={() => setExpandedTicketId(isExpanded ? null : ticket.id)}
+                        >
+                          {/* Expand chevron */}
+                          <ChevronDown
+                            className={cn(
+                              'size-4 mt-0.5 text-slate-400 transition-transform shrink-0',
+                              isExpanded && 'rotate-180',
+                            )}
+                          />
+
+                          {/* Customer avatar */}
+                          <div
+                            className="flex size-8 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white"
+                            style={{ background: 'linear-gradient(135deg,#3b82f6,#06b6d4)' }}
+                          >
+                            {getInitials(ticket.customer.name)}
+                          </div>
+
+                          {/* Main info */}
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-start justify-between gap-3 flex-wrap">
+                              <div className="min-w-0">
+                                <p className="font-semibold text-slate-900 truncate">
+                                  {ticket.subject}
+                                </p>
+                                <p className="text-xs text-slate-500 mt-0.5 truncate">
+                                  {ticket.customer.name} ({ticket.customer.email})
+                                </p>
+                              </div>
+                              <div className="flex items-center gap-2 shrink-0">
+                                <StatusBadge status={ticket.status} />
+                                <PriorityBadge priority={ticket.priority} />
+                              </div>
+                            </div>
+                            <div className="flex flex-wrap items-center gap-3 mt-2 text-xs text-slate-500">
+                              {ticket.category && (
+                                <span className="flex items-center gap-1">
+                                  <Tag className="size-3" />
+                                  {ticket.category}
+                                </span>
+                              )}
+                              <span className="flex items-center gap-1">
+                                <MessageSquare className="size-3" />
+                                {ticket._count.replies} replies
+                              </span>
+                              <span className="flex items-center gap-1">
+                                <Eye className="size-3" />
+                                {ticket.agent ? `Assigned: ${ticket.agent.name}` : 'Unassigned'}
+                              </span>
+                              <span>{formatFullDate(ticket.createdAt)}</span>
+                            </div>
+                          </div>
+
+                          {/* Actions */}
+                          <div
+                            className="flex items-center gap-2 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <button
+                              onClick={() => setDeleteTicket(ticket)}
+                              className="flex items-center gap-1.5 rounded-lg border border-red-200 bg-red-50 px-2.5 py-1.5 text-xs font-medium text-red-700 transition hover:bg-red-100 cursor-pointer"
+                            >
+                              <Trash2 className="size-3.5" />
+                              Delete
+                            </button>
+                          </div>
+                        </div>
+
+                        {/* Expanded row: description */}
+                        {isExpanded && (
+                          <div className="border-t border-slate-50 bg-slate-50 px-16 py-4 animate-fade-in">
+                            <p className="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">
+                              Description
+                            </p>
+                            <p className="text-sm text-slate-700 whitespace-pre-wrap leading-relaxed">
+                              {ticket.description}
+                            </p>
+                            <div className="mt-3 flex gap-2">
+                              <span className="text-xs text-slate-400">
+                                ID: <span className="font-mono text-slate-600">{ticket.id}</span>
+                              </span>
+                              <span className="text-xs text-slate-400">
+                                Updated: {formatRelativeTime(ticket.updatedAt)}
+                              </span>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })
                 )}
               </div>
 

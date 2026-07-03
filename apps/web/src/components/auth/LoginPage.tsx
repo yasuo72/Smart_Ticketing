@@ -258,7 +258,12 @@ export function LoginPage({ onLogin }: Props) {
               </div>
 
               <div>
-                <label htmlFor="password" className="block text-sm font-medium text-slate-700 mb-1.5">Password</label>
+                <label
+                  htmlFor="password"
+                  className="block text-sm font-medium text-slate-700 mb-1.5"
+                >
+                  Password
+                </label>
                 <div className="relative">
                   <Lock className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-400" />
                   <input

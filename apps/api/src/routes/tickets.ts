@@ -26,6 +26,7 @@ const createTicketSchema = z.object({
   subject: z.string().trim().min(3).max(160),
   description: z.string().trim().min(10).max(5000),
   priority: z.enum(Priority).optional(),
+  email: z.string().trim().email('A valid email address is required.'),
 });
 
 const updateTicketSchema = z
@@ -36,6 +37,7 @@ const updateTicketSchema = z
     priority: z.enum(Priority).optional(),
     agentId: z.string().nullable().optional(),
     assignToMe: z.boolean().optional(),
+    aiSummary: z.string().trim().max(1000).nullable().optional(),
   })
   .refine((data) => Object.keys(data).length > 0, {
     message: 'At least one field is required.',
@@ -106,6 +108,7 @@ ticketsRouter.post('/', async (request, response, next) => {
         description: input.description,
         priority: input.priority ?? Priority.MEDIUM,
         customerId: user.id,
+        notificationEmail: input.email,
       },
     });
     await prisma.reply.create({
@@ -280,7 +283,7 @@ ticketsRouter.post('/:id/replies', async (request, response, next) => {
 
     if (isStaff && !input.isInternal) {
       await sendTicketReplyEmail({
-        customerEmail: ticket.customer.email,
+        customerEmail: ticket.notificationEmail ?? ticket.customer.email,
         ticketSubject: ticket.subject,
         replyBody: input.body,
       });
@@ -348,6 +351,7 @@ function buildTicketUpdateData(
     status: isStaff ? status : undefined,
     priority: isStaff ? input.priority : undefined,
     agentId: isStaff ? (input.assignToMe ? currentUserId : input.agentId) : undefined,
+    aiSummary: isStaff ? input.aiSummary : undefined,
     resolvedAt,
     closedAt,
   };
@@ -411,6 +415,7 @@ function serializeTicket(ticket: TicketWithRelations, isStaff: boolean) {
     priority: ticket.priority,
     category: ticket.category,
     aiSummary: ticket.aiSummary,
+    notificationEmail: ticket.notificationEmail,
     customer: {
       id: ticket.customer.id,
       name: ticket.customer.name,

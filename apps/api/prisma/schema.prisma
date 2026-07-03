@@ -47,6 +47,7 @@ model Ticket {
   updatedAt           DateTime     @updatedAt
   resolvedAt          DateTime?
   closedAt            DateTime?
+  notificationEmail   String?
 
   @@index([customerId])
   @@index([agentId])
