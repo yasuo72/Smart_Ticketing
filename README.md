@@ -2,6 +2,8 @@
 
 <div align="center">
 
+  <img src="docs/images/hero-banner.jpg" alt="Smart Ticketing Hero Banner" width="100%" style="border-radius: 14px; margin-bottom: 20px;" />
+
   <img src="https://img.shields.io/badge/Status-Production%20Ready-emerald?style=for-the-badge&logo=rocket" alt="Status" />
   <img src="https://img.shields.io/badge/Frontend-Vercel%20%7C%20React%2019%20%7C%20Vite-blue?style=for-the-badge&logo=vercel" alt="Frontend" />
   <img src="https://img.shields.io/badge/Backend-Railway%20%7C%20Node.js%20%7C%20Express-purple?style=for-the-badge&logo=railway" alt="Backend" />
@@ -31,16 +33,24 @@ When a customer submits a problem—either through the web portal or by simply s
 
 ---
 
+## 🧠 AI Engine & Smart Auto-Pilot Workflow
+
+<div align="center">
+  <img src="docs/images/ai-workflow.jpg" alt="AI Smart Engine Workflow" width="100%" style="border-radius: 12px; margin-top: 10px; margin-bottom: 20px;" />
+</div>
+
+---
+
 ## 🌟 Highlights & Core Capabilities
 
-| Feature                    | Description                                                                                                 | Non-Tech Explanation                                                           |
-| :------------------------- | :---------------------------------------------------------------------------------------------------------- | :----------------------------------------------------------------------------- |
-| **🤖 AI Auto-Pilot**       | Analyzes sentiment, categorizes tickets, generates summaries, and auto-resolves simple support requests.    | Saves 80% of routine customer support time automatically.                      |
-| **📧 Two-Way Email Sync**  | Webhook integration with Resend API for automatic inbound ticket creation and outbound email notifications. | Customers use email as usual; support staff use a unified web dashboard.       |
-| **🪄 1-Click AI Polisher** | Converts informal agent notes or draft answers into empathetic, professionally worded customer responses.   | No typos or awkward phrasing—always crisp, professional support.               |
-| **📱 Mobile-First UI**     | Custom responsive sliding drawers, mobile hamburger menus, and seamless single-pane detail views.           | Works flawlessly on iPhones, Android devices, tablets, and desktops.           |
-| **⚡ Shimmer Skeletons**   | Smooth loading states with custom animated skeleton UI placeholders.                                        | Zero layout shifts or blank screens while data is loading.                     |
-| **🛡️ Role-Based Security** | Multi-tenant authorization (Customer, Agent, Admin) with audit logs and secure HTTP-only cookies.           | Ensures customers only see their own tickets while staff manage the workspace. |
+| Feature                    | Technical Implementation                                                                                                            | Non-Tech Explanation                                                           |
+| :------------------------- | :---------------------------------------------------------------------------------------------------------------------------------- | :----------------------------------------------------------------------------- |
+| **🤖 AI Auto-Pilot**       | Analyzes sentiment, categorizes tickets, generates summaries, and auto-resolves simple support requests using Groq / Llama 3.3.     | Saves 80% of routine customer support time automatically.                      |
+| **📧 Two-Way Email Sync**  | Webhook integration with Resend API for automatic inbound ticket creation and outbound email notifications.                         | Customers use email as usual; support staff use a unified web dashboard.       |
+| **🪄 1-Click AI Polisher** | Converts informal agent notes or draft answers into empathetic, professionally worded customer responses via AI prompt engineering. | No typos or awkward phrasing—always crisp, professional support.               |
+| **📱 Mobile-First UI**     | Custom responsive sliding drawers, mobile hamburger menus, and seamless single-pane detail views.                                   | Works flawlessly on iPhones, Android devices, tablets, and desktops.           |
+| **⚡ Shimmer Skeletons**   | Smooth loading states with custom animated skeleton UI placeholders preventing layout shift.                                        | Zero layout shifts or blank screens while data is loading.                     |
+| **🛡️ Role-Based Security** | Multi-tenant authorization (Customer, Agent, Admin) with audit logs and secure HTTP-only cookies.                                   | Ensures customers only see their own tickets while staff manage the workspace. |
 
 ---
 
@@ -84,6 +94,37 @@ flowchart TD
 
 ---
 
+## 📱 Multi-Device Experience & Responsiveness
+
+<div align="center">
+  <img src="docs/images/responsive-devices.jpg" alt="Multi-Device Responsive Experience" width="100%" style="border-radius: 12px; margin-top: 10px; margin-bottom: 20px;" />
+</div>
+
+The web application is engineered for multi-device perfection across laptops, tablets, and phones:
+
+```
+  ┌─────────────────────────────────────────────────────────────────┐
+  │                        DESKTOP VIEW (>768px)                    │
+  ├──────────────┬───────────────────┬──────────────────────────────┤
+  │   SIDEBAR    │   TICKET LIST     │     TICKET DETAIL / CHAT     │
+  │   (Fixed)    │   (320px Panel)   │     (Flexible Main View)     │
+  └──────────────┴───────────────────┴──────────────────────────────┘
+
+  ┌─────────────────────────────────────────────────────────────────┐
+  │                        MOBILE VIEW (<768px)                     │
+  ├─────────────────────────────────────────────────────────────────┤
+  │ [☰] Header with Mobile Drawer Menu                              │
+  ├─────────────────────────────────────────────────────────────────┤
+  │ State 1: Shows Ticket List (Full Width)                         │
+  │ State 2: When Ticket Tapped -> Displays Chat View + [← Back]    │
+  └─────────────────────────────────────────────────────────────────┘
+```
+
+- **Sliding Navigation Drawer**: On mobile devices, clicking the hamburger icon `[☰]` slides out the navigation drawer with a frosted backdrop.
+- **Single-Pane Chat View**: On mobile, selecting a ticket seamlessly switches from the list view to the dedicated ticket detail view, providing maximum screen space for reading and composing replies.
+
+---
+
 ## 🛠️ Complete Technology Stack
 
 ### 🎨 Frontend Ecosystem
@@ -112,33 +153,6 @@ flowchart TD
 
 - **LLM Provider**: OpenAI-compatible Groq API running `llama-3.3-70b-versatile`.
 - **Email Delivery**: [Resend API](https://resend.com/) for transactional outbound emails and inbound webhook events.
-
----
-
-## 📱 Mobile Responsiveness & Layout Design
-
-The web application is engineered for multi-device perfection:
-
-```
-  ┌─────────────────────────────────────────────────────────────────┐
-  │                        DESKTOP VIEW (>768px)                    │
-  ├──────────────┬───────────────────┬──────────────────────────────┤
-  │   SIDEBAR    │   TICKET LIST     │     TICKET DETAIL / CHAT     │
-  │   (Fixed)    │   (320px Panel)   │     (Flexible Main View)     │
-  └──────────────┴───────────────────┴──────────────────────────────┘
-
-  ┌─────────────────────────────────────────────────────────────────┐
-  │                        MOBILE VIEW (<768px)                     │
-  ├─────────────────────────────────────────────────────────────────┤
-  │ [☰] Header with Mobile Drawer Menu                              │
-  ├─────────────────────────────────────────────────────────────────┤
-  │ State 1: Shows Ticket List (Full Width)                         │
-  │ State 2: When Ticket Tapped -> Displays Chat View + [← Back]    │
-  └─────────────────────────────────────────────────────────────────┘
-```
-
-- **Sliding Navigation Drawer**: On mobile devices, clicking the hamburger icon `[☰]` slides out the navigation drawer with a frosted backdrop.
-- **Single-Pane Chat View**: On mobile, selecting a ticket seamlessly switches from the list view to the dedicated ticket detail view, providing maximum screen space for reading and composing replies.
 
 ---
 
