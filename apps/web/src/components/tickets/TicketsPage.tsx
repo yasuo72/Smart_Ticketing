@@ -1,5 +1,6 @@
 import { useEffect, useState, type FormEvent } from 'react';
 import {
+  ArrowLeft,
   Bot,
   ChevronRight,
   Inbox,
@@ -31,10 +32,17 @@ const statusBorderColor: Record<TicketStatus, string> = {
   CLOSED: '#94a3b8',
 };
 
-export function TicketsPage({ user }: { user: AuthUser }) {
+export function TicketsPage({
+  user,
+  onToggleMobileMenu,
+}: {
+  user: AuthUser;
+  onToggleMobileMenu?: () => void;
+}) {
   const isStaff = user.role === 'AGENT' || user.role === 'ADMIN';
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [mobileShowDetail, setMobileShowDetail] = useState(false);
   const [statusFilter, setStatusFilter] = useState<'ALL' | TicketStatus>('ALL');
   const [priorityFilter, setPriorityFilter] = useState<'ALL' | Priority>('ALL');
   const [search, setSearch] = useState('');
@@ -100,6 +108,7 @@ export function TicketsPage({ user }: { user: AuthUser }) {
     }
     setTickets((prev) => [data.ticket!, ...prev]);
     setSelectedId(data.ticket.id);
+    setMobileShowDetail(true);
     setSubject('');
     setDescription('');
     setNewPriority('MEDIUM');
@@ -160,12 +169,20 @@ export function TicketsPage({ user }: { user: AuthUser }) {
 
   return (
     <div className="flex flex-col h-full overflow-hidden">
-      <Header view="tickets" onRefresh={loadTickets} isRefreshing={isLoading} />
+      <Header
+        view="tickets"
+        onRefresh={loadTickets}
+        isRefreshing={isLoading}
+        onToggleMobileMenu={onToggleMobileMenu}
+      />
 
       <div className="flex flex-1 overflow-hidden" data-testid="ticket-workspace">
         {/* Left panel: list */}
         <div
-          className="flex flex-col w-80 shrink-0 border-r border-slate-200 bg-white overflow-hidden"
+          className={cn(
+            'flex flex-col w-full md:w-80 shrink-0 border-r border-slate-200 bg-white overflow-hidden',
+            mobileShowDetail ? 'hidden md:flex' : 'flex',
+          )}
           data-testid="ticket-list"
         >
           {/* List header + actions */}
@@ -346,7 +363,10 @@ export function TicketsPage({ user }: { user: AuthUser }) {
                   <button
                     key={ticket.id}
                     type="button"
-                    onClick={() => setSelectedId(ticket.id)}
+                    onClick={() => {
+                      setSelectedId(ticket.id);
+                      setMobileShowDetail(true);
+                    }}
                     className={cn(
                       'w-full text-left px-4 py-3 transition-all border-l-2 cursor-pointer',
                       isSelected
@@ -389,13 +409,24 @@ export function TicketsPage({ user }: { user: AuthUser }) {
 
         {/* Right panel: detail */}
         <div
-          className="flex-1 flex flex-col overflow-hidden bg-slate-50"
+          className={cn(
+            'flex-1 flex flex-col overflow-hidden bg-slate-50 min-w-0',
+            mobileShowDetail ? 'flex' : 'hidden md:flex',
+          )}
           data-testid="ticket-detail"
         >
           {selected ? (
             <>
               {/* Detail header */}
-              <div className="bg-white border-b border-slate-200 px-6 py-4 shrink-0">
+              <div className="bg-white border-b border-slate-200 px-4 sm:px-6 py-4 shrink-0">
+                <button
+                  type="button"
+                  onClick={() => setMobileShowDetail(false)}
+                  className="md:hidden inline-flex items-center gap-1.5 text-xs font-semibold text-indigo-600 hover:text-indigo-800 mb-3 py-1.5 px-3 rounded-lg bg-indigo-50 border border-indigo-100 cursor-pointer transition"
+                >
+                  <ArrowLeft className="size-3.5" />
+                  Back to tickets
+                </button>
                 <div className="flex items-start justify-between gap-4 flex-wrap">
                   <div className="min-w-0">
                     <div className="flex items-center gap-2 text-xs text-slate-400 mb-1">
@@ -405,7 +436,7 @@ export function TicketsPage({ user }: { user: AuthUser }) {
                         {selected.subject}
                       </span>
                     </div>
-                    <h2 className="text-xl font-bold text-slate-900 leading-tight">
+                    <h2 className="text-lg sm:text-xl font-bold text-slate-900 leading-tight">
                       {selected.subject}
                     </h2>
                     <div className="flex flex-wrap items-center gap-2 mt-2">
@@ -478,7 +509,7 @@ export function TicketsPage({ user }: { user: AuthUser }) {
               </div>
 
               {/* Description */}
-              <div className="bg-white mx-6 mt-4 rounded-xl border border-slate-200 p-4 shrink-0 shadow-sm">
+              <div className="bg-white mx-3 sm:mx-6 mt-4 rounded-xl border border-slate-200 p-4 shrink-0 shadow-sm">
                 <p className="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">
                   Description
                 </p>
@@ -543,7 +574,7 @@ export function TicketsPage({ user }: { user: AuthUser }) {
               </div>
 
               {/* Thread */}
-              <div className="flex-1 overflow-y-auto px-6 py-4 space-y-3">
+              <div className="flex-1 overflow-y-auto px-3 sm:px-6 py-4 space-y-3">
                 {selected.replies.map((reply) => {
                   const isCustomer = reply.author.role === 'CUSTOMER';
                   return (
@@ -574,7 +605,7 @@ export function TicketsPage({ user }: { user: AuthUser }) {
 
                       <div
                         className={cn(
-                          'max-w-[75%] space-y-1',
+                          'max-w-[85%] sm:max-w-[75%] space-y-1',
                           isCustomer ? 'items-start' : 'items-end',
                         )}
                       >
@@ -631,7 +662,7 @@ export function TicketsPage({ user }: { user: AuthUser }) {
               </div>
 
               {/* Reply composer */}
-              <div className="shrink-0 border-t border-slate-200 bg-white px-6 py-4">
+              <div className="shrink-0 border-t border-slate-200 bg-white px-3 sm:px-6 py-3 sm:py-4">
                 {selected.status === 'CLOSED' && !isStaff && (
                   <div className="flex items-center gap-2 rounded-lg bg-slate-100 px-4 py-3 text-sm text-slate-600 mb-3">
                     <Lock className="size-4" />

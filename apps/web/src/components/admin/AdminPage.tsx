@@ -287,8 +287,7 @@ function ConfirmDeleteModal({
   );
 }
 
-// ── Main AdminPage ─────────────────────────────────────────────────────────
-export function AdminPage() {
+export function AdminPage({ onToggleMobileMenu }: { onToggleMobileMenu?: () => void }) {
   const [tab, setTab] = useState<Tab>('users');
 
   // Users state
@@ -405,6 +404,7 @@ export function AdminPage() {
         view="users"
         onRefresh={tab === 'users' ? loadUsers : loadTickets}
         isRefreshing={isLoadingUsers || isLoadingTickets}
+        onToggleMobileMenu={onToggleMobileMenu}
       />
 
       <div className="flex-1 overflow-y-auto p-6 space-y-5">
@@ -431,12 +431,12 @@ export function AdminPage() {
                     <Icon className="size-4" style={{ color: stat.color }} />
                   </div>
                 </div>
-                <p
+                <div
                   className="mt-2 text-2xl font-bold text-slate-900"
                   style={{ fontFamily: "'Outfit', sans-serif" }}
                 >
                   {stat.value}
-                </p>
+                </div>
               </div>
             );
           })}

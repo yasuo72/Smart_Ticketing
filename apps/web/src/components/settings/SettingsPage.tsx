@@ -21,7 +21,13 @@ import { Header } from '../layout/Header';
 
 type SettingSection = 'profile' | 'notifications' | 'appearance' | 'security' | 'api';
 
-export function SettingsPage({ user }: { user: AuthUser }) {
+export function SettingsPage({
+  user,
+  onToggleMobileMenu,
+}: {
+  user: AuthUser;
+  onToggleMobileMenu?: () => void;
+}) {
   const [activeSection, setActiveSection] = useState<SettingSection>('profile');
   const [name, setName] = useState(user.name);
   const [saved, setSaved] = useState(false);
@@ -44,18 +50,18 @@ export function SettingsPage({ user }: { user: AuthUser }) {
 
   return (
     <div className="flex flex-col h-full overflow-hidden">
-      <Header view="settings" />
+      <Header view="settings" onToggleMobileMenu={onToggleMobileMenu} />
 
-      <div className="flex flex-1 overflow-hidden">
+      <div className="flex flex-col sm:flex-row flex-1 overflow-hidden">
         {/* Settings sidebar */}
-        <nav className="w-52 shrink-0 border-r border-slate-200 bg-white overflow-y-auto p-3 space-y-1">
+        <nav className="w-full sm:w-52 shrink-0 border-b sm:border-b-0 sm:border-r border-slate-200 bg-white overflow-x-auto sm:overflow-y-auto p-2 sm:p-3 flex sm:flex-col gap-1">
           {sections.map((s) => {
             const Icon = s.icon;
             return (
               <button
                 key={s.id}
                 onClick={() => setActiveSection(s.id)}
-                className={`flex w-full items-center gap-2.5 rounded-lg px-3 py-2.5 text-sm font-medium transition cursor-pointer ${
+                className={`flex items-center gap-2 rounded-lg px-3 py-2 text-xs sm:text-sm font-medium transition cursor-pointer whitespace-nowrap ${
                   activeSection === s.id
                     ? 'bg-indigo-50 text-indigo-700'
                     : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'

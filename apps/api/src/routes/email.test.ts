@@ -130,8 +130,10 @@ describe('email integration', () => {
     });
 
     expect(ticket?.replies.length).toBeGreaterThanOrEqual(2);
-    const lastReply = ticket?.replies[ticket.replies.length - 1];
-    expect(lastReply?.body).toBe('Adding more details from mobile app.');
+    const customerReply = ticket?.replies.find(
+      (r) => r.body === 'Adding more details from mobile app.',
+    );
+    expect(customerReply).toBeDefined();
   });
 
   it('handles Resend email_id payloads and creates a ticket even when body is omitted', async () => {

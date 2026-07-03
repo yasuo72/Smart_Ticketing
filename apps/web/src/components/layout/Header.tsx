@@ -1,4 +1,4 @@
-import { Bell, RefreshCw, Search } from 'lucide-react';
+import { Bell, Menu, RefreshCw, Search } from 'lucide-react';
 import type { NavView } from '../../lib/types';
 import { labelFromKey } from '../../lib/utils';
 
@@ -13,22 +13,36 @@ type Props = {
   view: NavView;
   onRefresh?: () => void;
   isRefreshing?: boolean;
+  onToggleMobileMenu?: () => void;
 };
 
-export function Header({ view, onRefresh, isRefreshing }: Props) {
+export function Header({ view, onRefresh, isRefreshing, onToggleMobileMenu }: Props) {
   return (
     <header
-      className="flex items-center justify-between px-6 py-4 shrink-0"
+      className="flex items-center justify-between px-4 sm:px-6 py-3.5 shrink-0"
       style={{ background: '#ffffff', borderBottom: '1px solid #e2e8f0', minHeight: '65px' }}
     >
-      <div>
-        <h1
-          className="text-lg font-semibold text-slate-900"
-          style={{ fontFamily: "'Outfit', sans-serif" }}
-        >
-          {labelFromKey(view)}
-        </h1>
-        <p className="text-sm text-slate-500 mt-0.5">{viewDescriptions[view]}</p>
+      <div className="flex items-center gap-3">
+        {onToggleMobileMenu && (
+          <button
+            onClick={onToggleMobileMenu}
+            className="md:hidden flex size-9 items-center justify-center rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 cursor-pointer shrink-0"
+            title="Open navigation menu"
+          >
+            <Menu className="size-5" />
+          </button>
+        )}
+        <div>
+          <h1
+            className="text-base sm:text-lg font-semibold text-slate-900"
+            style={{ fontFamily: "'Outfit', sans-serif" }}
+          >
+            {labelFromKey(view)}
+          </h1>
+          <p className="text-xs sm:text-sm text-slate-500 mt-0.5 line-clamp-1">
+            {viewDescriptions[view]}
+          </p>
+        </div>
       </div>
 
       <div className="flex items-center gap-2">

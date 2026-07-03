@@ -12,6 +12,7 @@ export function App() {
   const [currentUser, setCurrentUser] = useState<AuthUser | null>(null);
   const [sessionChecked, setSessionChecked] = useState(false);
   const [activeView, setActiveView] = useState<NavView>('tickets');
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   // Restore session on mount
   useEffect(() => {
@@ -115,24 +116,30 @@ export function App() {
     return <LoginPage onLogin={handleLogin} />;
   }
 
+  const handleToggleMobileMenu = () => setMobileMenuOpen((prev) => !prev);
+
   // Resolve which page to show
   function renderPage() {
     if (!currentUser) return null;
     switch (activeView) {
       case 'dashboard':
         return currentUser.role === 'CUSTOMER' ? (
-          <TicketsPage user={currentUser} />
+          <TicketsPage user={currentUser} onToggleMobileMenu={handleToggleMobileMenu} />
         ) : (
-          <DashboardPage />
+          <DashboardPage onToggleMobileMenu={handleToggleMobileMenu} />
         );
       case 'tickets':
-        return <TicketsPage user={currentUser} />;
+        return <TicketsPage user={currentUser} onToggleMobileMenu={handleToggleMobileMenu} />;
       case 'users':
-        return currentUser.role === 'ADMIN' ? <AdminPage /> : <TicketsPage user={currentUser} />;
+        return currentUser.role === 'ADMIN' ? (
+          <AdminPage onToggleMobileMenu={handleToggleMobileMenu} />
+        ) : (
+          <TicketsPage user={currentUser} onToggleMobileMenu={handleToggleMobileMenu} />
+        );
       case 'settings':
-        return <SettingsPage user={currentUser} />;
+        return <SettingsPage user={currentUser} onToggleMobileMenu={handleToggleMobileMenu} />;
       default:
-        return <TicketsPage user={currentUser} />;
+        return <TicketsPage user={currentUser} onToggleMobileMenu={handleToggleMobileMenu} />;
     }
   }
 
@@ -144,10 +151,12 @@ export function App() {
         activeView={activeView}
         onNavigate={setActiveView}
         onLogout={handleLogout}
+        isOpenMobile={mobileMenuOpen}
+        onCloseMobile={() => setMobileMenuOpen(false)}
       />
 
       {/* Main content */}
-      <main className="flex flex-1 flex-col overflow-hidden">{renderPage()}</main>
+      <main className="flex flex-1 flex-col overflow-hidden min-w-0">{renderPage()}</main>
     </div>
   );
 }

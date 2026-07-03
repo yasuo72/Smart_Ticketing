@@ -34,12 +34,12 @@ function StatCard({
       <div className="flex items-start justify-between">
         <div>
           <p className="text-sm font-medium text-slate-500">{label}</p>
-          <p
+          <div
             className="mt-2 text-3xl font-bold text-slate-900"
             style={{ fontFamily: "'Outfit', sans-serif" }}
           >
             {value}
-          </p>
+          </div>
           {subLabel && <p className="mt-1 text-xs text-slate-400">{subLabel}</p>}
         </div>
         <div
@@ -92,7 +92,7 @@ const priorityColors: Record<string, string> = {
 
 const categoryColors = ['#6366f1', '#8b5cf6', '#06b6d4', '#10b981', '#f59e0b', '#ef4444'];
 
-export function DashboardPage() {
+export function DashboardPage({ onToggleMobileMenu }: { onToggleMobileMenu?: () => void }) {
   const [data, setData] = useState<DashboardData | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
@@ -124,7 +124,12 @@ export function DashboardPage() {
 
   return (
     <div className="flex flex-col h-full overflow-hidden">
-      <Header view="dashboard" onRefresh={load} isRefreshing={isLoading} />
+      <Header
+        view="dashboard"
+        onRefresh={load}
+        isRefreshing={isLoading}
+        onToggleMobileMenu={onToggleMobileMenu}
+      />
 
       <div className="flex-1 overflow-y-auto p-6 space-y-6">
         {error && (
