@@ -76,6 +76,7 @@ describe('ticket management', () => {
       subject: 'Cannot access billing page',
       description: 'The billing page returns a blank screen after I sign in.',
       priority: Priority.HIGH,
+      email: customer.email,
     });
 
     expect(createResponse.status).toBe(201);
@@ -241,6 +242,7 @@ describe('ticket management', () => {
       subject: 'How do I reset password?',
       description: 'I forgot my password and need instructions to reset password for my account.',
       priority: Priority.MEDIUM,
+      email: customer.email,
     });
 
     expect(response.status).toBe(201);
