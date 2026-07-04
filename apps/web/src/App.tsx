@@ -131,22 +131,48 @@ export function App() {
     switch (activeView) {
       case 'dashboard':
         return isCustomer ? (
-          <TicketsPage user={currentUser} onToggleMobileMenu={handleToggleMobileMenu} isCustomer={isCustomer} />
+          <TicketsPage
+            user={currentUser}
+            onToggleMobileMenu={handleToggleMobileMenu}
+            isCustomer={isCustomer}
+          />
         ) : (
           <DashboardPage onToggleMobileMenu={handleToggleMobileMenu} />
         );
       case 'tickets':
-        return <TicketsPage user={currentUser} onToggleMobileMenu={handleToggleMobileMenu} isCustomer={isCustomer} />;
+        return (
+          <TicketsPage
+            user={currentUser}
+            onToggleMobileMenu={handleToggleMobileMenu}
+            isCustomer={isCustomer}
+          />
+        );
       case 'users':
         return currentUser.role === 'ADMIN' ? (
           <AdminPage onToggleMobileMenu={handleToggleMobileMenu} />
         ) : (
-          <TicketsPage user={currentUser} onToggleMobileMenu={handleToggleMobileMenu} isCustomer={isCustomer} />
+          <TicketsPage
+            user={currentUser}
+            onToggleMobileMenu={handleToggleMobileMenu}
+            isCustomer={isCustomer}
+          />
         );
       case 'settings':
-        return <SettingsPage user={currentUser} onToggleMobileMenu={handleToggleMobileMenu} isCustomer={isCustomer} />;
+        return (
+          <SettingsPage
+            user={currentUser}
+            onToggleMobileMenu={handleToggleMobileMenu}
+            isCustomer={isCustomer}
+          />
+        );
       default:
-        return <TicketsPage user={currentUser} onToggleMobileMenu={handleToggleMobileMenu} isCustomer={isCustomer} />;
+        return (
+          <TicketsPage
+            user={currentUser}
+            onToggleMobileMenu={handleToggleMobileMenu}
+            isCustomer={isCustomer}
+          />
+        );
     }
   }
 

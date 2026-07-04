@@ -110,7 +110,9 @@ export function Header({ view, onRefresh, isRefreshing, onToggleMobileMenu, isCu
               <div className="animate-marquee font-mono text-indigo-100 flex items-center gap-4">
                 <span>
                   ✉️ Need direct assistance? Contact our support desk at{' '}
-                  <strong className="text-white underline font-semibold">support@rohitis.online</strong>{' '}
+                  <strong className="text-white underline font-semibold">
+                    support@rohitis.online
+                  </strong>{' '}
                   for instant ticket creation!
                 </span>
                 <span>•</span>
@@ -123,7 +125,11 @@ export function Header({ view, onRefresh, isRefreshing, onToggleMobileMenu, isCu
             className="ml-3 shrink-0 flex items-center gap-1 bg-white/10 hover:bg-white/20 text-white px-2 py-0.5 rounded text-[11px] font-medium transition cursor-pointer border border-white/20"
             title="Copy email to clipboard"
           >
-            {copiedEmail ? <Check className="size-3 text-emerald-300" /> : <Copy className="size-3" />}
+            {copiedEmail ? (
+              <Check className="size-3 text-emerald-300" />
+            ) : (
+              <Copy className="size-3" />
+            )}
             {copiedEmail ? 'Copied!' : 'Copy Email'}
           </button>
         </div>
@@ -174,7 +180,11 @@ export function Header({ view, onRefresh, isRefreshing, onToggleMobileMenu, isCu
             className="flex size-9 items-center justify-center rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 transition hover:bg-slate-50 dark:hover:bg-slate-700 cursor-pointer"
             title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
           >
-            {theme === 'dark' ? <Sun className="size-4 text-amber-400" /> : <Moon className="size-4 text-slate-600" />}
+            {theme === 'dark' ? (
+              <Sun className="size-4 text-amber-400" />
+            ) : (
+              <Moon className="size-4 text-slate-600" />
+            )}
           </button>
 
           {/* Refresh button */}
@@ -234,9 +244,7 @@ export function Header({ view, onRefresh, isRefreshing, onToggleMobileMenu, isCu
                       <div
                         key={item.id}
                         className={`p-2.5 rounded-lg flex items-start justify-between gap-2 text-xs transition ${
-                          item.unread
-                            ? 'bg-indigo-50/50 dark:bg-indigo-950/30'
-                            : 'bg-transparent'
+                          item.unread ? 'bg-indigo-50/50 dark:bg-indigo-950/30' : 'bg-transparent'
                         }`}
                       >
                         <div className="flex items-start gap-2 min-w-0">
