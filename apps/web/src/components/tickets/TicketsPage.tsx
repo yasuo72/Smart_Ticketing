@@ -2,7 +2,10 @@ import { useEffect, useState, type FormEvent } from 'react';
 import {
   ArrowLeft,
   Bot,
+  ChevronDown,
   ChevronRight,
+  ChevronUp,
+  FileText,
   Inbox,
   Lock,
   MessageSquare,
@@ -32,6 +35,15 @@ const statusBorderColor: Record<TicketStatus, string> = {
   CLOSED: '#94a3b8',
 };
 
+function cleanSubject(sub: string): string {
+  if (!sub) return '';
+  const stripped = sub.replace(/^(?:re|fw|fwd):\s*/gi, '').trim();
+  if (/^re:/i.test(sub)) {
+    return `Re: ${stripped.replace(/^(?:re|fw|fwd):\s*/gi, '')}`;
+  }
+  return sub;
+}
+
 export function TicketsPage({
   user,
   onToggleMobileMenu,
@@ -43,6 +55,7 @@ export function TicketsPage({
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [mobileShowDetail, setMobileShowDetail] = useState(false);
+  const [showOverview, setShowOverview] = useState(true);
   const [statusFilter, setStatusFilter] = useState<'ALL' | TicketStatus>('ALL');
   const [priorityFilter, setPriorityFilter] = useState<'ALL' | Priority>('ALL');
   const [search, setSearch] = useState('');
@@ -382,7 +395,7 @@ export function TicketsPage({
                           isSelected ? 'text-indigo-900' : 'text-slate-800',
                         )}
                       >
-                        {ticket.subject}
+                        {cleanSubject(ticket.subject)}
                       </p>
                       <PriorityBadge priority={ticket.priority} />
                     </div>
@@ -433,11 +446,11 @@ export function TicketsPage({
                       <span>Tickets</span>
                       <ChevronRight className="size-3" />
                       <span className="text-slate-600 font-medium truncate max-w-60">
-                        {selected.subject}
+                        {cleanSubject(selected.subject)}
                       </span>
                     </div>
                     <h2 className="text-lg sm:text-xl font-bold text-slate-900 leading-tight">
-                      {selected.subject}
+                      {cleanSubject(selected.subject)}
                     </h2>
                     <div className="flex flex-wrap items-center gap-2 mt-2">
                       <StatusBadge status={selected.status} />
@@ -508,73 +521,110 @@ export function TicketsPage({
                 </div>
               </div>
 
-              {/* Description */}
-              <div className="bg-white mx-3 sm:mx-6 mt-4 rounded-xl border border-slate-200 p-4 shrink-0 shadow-sm">
-                <p className="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">
-                  Description
-                </p>
-                <p className="text-sm text-slate-700 whitespace-pre-wrap leading-relaxed">
-                  {selected.description}
-                </p>
-                <div className="mt-4 pt-3 border-t border-slate-100">
-                  <div className="flex items-center justify-between mb-1.5">
-                    <p className="text-xs font-semibold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
-                      <Bot className="size-3.5 text-indigo-500" />
-                      Summary
-                    </p>
-                    {isStaff && !editingSummary && (
-                      <button
-                        onClick={() => setEditingSummary(true)}
-                        className="text-xs text-indigo-600 hover:text-indigo-800 font-medium transition cursor-pointer"
-                      >
-                        Edit
-                      </button>
-                    )}
+              {/* Main Scrollable Thread & Overview Area */}
+              <div className="flex-1 overflow-y-auto px-3 sm:px-6 py-4 space-y-4">
+                {/* Description & AI Summary Collapsible Card */}
+                <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden animate-fade-in transition-all">
+                  {/* Card Header Bar */}
+                  <div className="flex items-center justify-between px-4 py-2.5 bg-slate-50 border-b border-slate-100 select-none">
+                    <div className="flex items-center gap-2">
+                      <FileText className="size-4 text-indigo-500" />
+                      <span className="text-xs font-semibold uppercase tracking-wider text-slate-700">
+                        Issue Overview & Summary
+                      </span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setShowOverview((prev) => !prev)}
+                      className="flex items-center gap-1 text-xs font-medium text-slate-500 hover:text-indigo-600 transition cursor-pointer"
+                    >
+                      <span>{showOverview ? 'Collapse' : 'Expand'}</span>
+                      {showOverview ? (
+                        <ChevronUp className="size-3.5" />
+                      ) : (
+                        <ChevronDown className="size-3.5" />
+                      )}
+                    </button>
                   </div>
 
-                  {editingSummary ? (
-                    <div className="space-y-2">
-                      <textarea
-                        value={summaryValue}
-                        onChange={(e) => setSummaryValue(e.target.value)}
-                        placeholder="Write a brief summary of this ticket..."
-                        rows={2}
-                        className="w-full text-xs rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 outline-none focus:border-indigo-400 focus:bg-white resize-none"
-                      />
-                      <div className="flex justify-end gap-1.5">
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setEditingSummary(false);
-                            setSummaryValue(selected.aiSummary ?? '');
-                          }}
-                          className="px-2 py-1 rounded text-[11px] font-medium text-slate-500 hover:bg-slate-100 transition cursor-pointer"
-                        >
-                          Cancel
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            void updateTicket(selected.id, { aiSummary: summaryValue });
-                            setEditingSummary(false);
-                          }}
-                          className="px-2 py-1 rounded text-[11px] font-medium text-white transition cursor-pointer"
-                          style={{ background: '#6366f1' }}
-                        >
-                          Save
-                        </button>
+                  {/* Card Body */}
+                  {showOverview ? (
+                    <div className="p-4 space-y-3">
+                      <div>
+                        <p className="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">
+                          Description
+                        </p>
+                        <p className="text-sm text-slate-700 whitespace-pre-wrap leading-relaxed">
+                          {selected.description}
+                        </p>
+                      </div>
+
+                      <div className="pt-3 border-t border-slate-100">
+                        <div className="flex items-center justify-between mb-1.5">
+                          <p className="text-xs font-semibold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+                            <Bot className="size-3.5 text-indigo-500" />
+                            AI Summary
+                          </p>
+                          {isStaff && !editingSummary && (
+                            <button
+                              onClick={() => setEditingSummary(true)}
+                              className="text-xs text-indigo-600 hover:text-indigo-800 font-medium transition cursor-pointer"
+                            >
+                              Edit
+                            </button>
+                          )}
+                        </div>
+
+                        {editingSummary ? (
+                          <div className="space-y-2">
+                            <textarea
+                              value={summaryValue}
+                              onChange={(e) => setSummaryValue(e.target.value)}
+                              placeholder="Write a brief summary of this ticket..."
+                              rows={2}
+                              className="w-full text-xs rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 outline-none focus:border-indigo-400 focus:bg-white resize-none"
+                            />
+                            <div className="flex justify-end gap-1.5">
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setEditingSummary(false);
+                                  setSummaryValue(selected.aiSummary ?? '');
+                                }}
+                                className="px-2 py-1 rounded text-[11px] font-medium text-slate-500 hover:bg-slate-100 transition cursor-pointer"
+                              >
+                                Cancel
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  void updateTicket(selected.id, { aiSummary: summaryValue });
+                                  setEditingSummary(false);
+                                }}
+                                className="px-2 py-1 rounded text-[11px] font-medium text-white transition cursor-pointer"
+                                style={{ background: '#6366f1' }}
+                              >
+                                Save
+                              </button>
+                            </div>
+                          </div>
+                        ) : (
+                          <p className="text-xs text-slate-600 leading-relaxed italic">
+                            {selected.aiSummary || 'No summary has been generated or written yet.'}
+                          </p>
+                        )}
                       </div>
                     </div>
                   ) : (
-                    <p className="text-xs text-slate-600 leading-relaxed italic">
-                      {selected.aiSummary || 'No summary has been generated or written yet.'}
-                    </p>
+                    <div
+                      className="px-4 py-2 text-xs text-slate-500 truncate cursor-pointer hover:bg-slate-50 transition"
+                      onClick={() => setShowOverview(true)}
+                    >
+                      <span className="font-semibold text-slate-700">Summary: </span>
+                      {selected.aiSummary || selected.description}
+                    </div>
                   )}
                 </div>
-              </div>
-
-              {/* Thread */}
-              <div className="flex-1 overflow-y-auto px-3 sm:px-6 py-4 space-y-3">
                 {selected.replies.map((reply) => {
                   const isCustomer = reply.author.role === 'CUSTOMER';
                   return (
