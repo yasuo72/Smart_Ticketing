@@ -8,7 +8,6 @@ import {
   TicketCheck,
   TrendingUp,
   Users,
-  Zap,
 } from 'lucide-react';
 import { apiFetch } from '../../lib/api';
 import type { DashboardData } from '../../lib/types';
@@ -200,7 +199,7 @@ export function DashboardPage({ onToggleMobileMenu }: { onToggleMobileMenu?: () 
           <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
             <div className="mb-4 flex items-center gap-2">
               <div className="flex size-8 items-center justify-center rounded-lg bg-orange-50">
-                <Zap className="size-4 text-orange-500" />
+                <Activity className="size-4 text-orange-500" />
               </div>
               <div>
                 <h2 className="text-sm font-semibold text-slate-900">Priority Breakdown</h2>

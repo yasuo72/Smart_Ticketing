@@ -12,8 +12,8 @@ import {
   RefreshCw,
   Search,
   Send,
-  Sparkles,
   UserCog,
+  Wand2,
   X,
 } from 'lucide-react';
 import { apiFetch } from '../../lib/api';
@@ -47,9 +47,11 @@ function cleanSubject(sub: string): string {
 export function TicketsPage({
   user,
   onToggleMobileMenu,
+  isCustomer,
 }: {
   user: AuthUser;
   onToggleMobileMenu?: () => void;
+  isCustomer?: boolean;
 }) {
   const isStaff = user.role === 'AGENT' || user.role === 'ADMIN';
   const [tickets, setTickets] = useState<Ticket[]>([]);
@@ -187,6 +189,7 @@ export function TicketsPage({
         onRefresh={loadTickets}
         isRefreshing={isLoading}
         onToggleMobileMenu={onToggleMobileMenu}
+        isCustomer={isCustomer ?? user.role === 'CUSTOMER'}
       />
 
       <div className="flex flex-1 overflow-hidden" data-testid="ticket-workspace">
@@ -737,7 +740,7 @@ export function TicketsPage({
                     <div className="rounded-xl border border-indigo-200 bg-indigo-50 p-4 animate-fade-in">
                       <div className="flex items-center justify-between mb-2">
                         <span className="flex items-center gap-1.5 text-xs font-semibold text-indigo-700">
-                          <Sparkles className="size-3.5" />
+                          <Wand2 className="size-3.5" />
                           AI Polished Reply
                         </span>
                         <button
@@ -785,7 +788,7 @@ export function TicketsPage({
                           onClick={() => void polishReply()}
                           className="flex items-center gap-1.5 rounded-lg border border-indigo-200 bg-indigo-50 px-3 py-2 text-xs font-medium text-indigo-700 transition hover:bg-indigo-100 disabled:opacity-40 cursor-pointer"
                         >
-                          <Sparkles className={`size-3.5 ${isPolishing ? 'animate-spin' : ''}`} />
+                          <Wand2 className={`size-3.5 ${isPolishing ? 'animate-spin' : ''}`} />
                           {isPolishing ? 'Polishing...' : 'Polish with AI'}
                         </button>
                       )}

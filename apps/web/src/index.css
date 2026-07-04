@@ -42,6 +42,85 @@ body {
   text-rendering: optimizeLegibility;
 }
 
+/* Dark Mode Global Styles */
+.dark body {
+  color: #f8fafc;
+  background: #0b0f19;
+}
+
+.dark header {
+  background: #111827 !important;
+  border-bottom-color: #1f2937 !important;
+}
+
+.dark header h1 {
+  color: #f9fafb !important;
+}
+
+.dark header p {
+  color: #9ca3af !important;
+}
+
+.dark main {
+  background: #0b0f19 !important;
+}
+
+.dark .bg-white {
+  background-color: #111827 !important;
+  border-color: #1f2937 !important;
+  color: #f9fafb !important;
+}
+
+.dark .bg-slate-50 {
+  background-color: #0d111d !important;
+  color: #e5e7eb !important;
+}
+
+.dark .bg-slate-100 {
+  background-color: #1f2937 !important;
+  color: #e5e7eb !important;
+}
+
+.dark .text-slate-900 {
+  color: #f9fafb !important;
+}
+
+.dark .text-slate-800 {
+  color: #f3f4f6 !important;
+}
+
+.dark .text-slate-700 {
+  color: #e5e7eb !important;
+}
+
+.dark .text-slate-600 {
+  color: #9ca3af !important;
+}
+
+.dark .text-slate-500 {
+  color: #9ca3af !important;
+}
+
+.dark .border-slate-200,
+.dark .border-slate-100,
+.dark .divide-slate-50 > :not([hidden]) ~ :not([hidden]),
+.dark .divide-slate-100 > :not([hidden]) ~ :not([hidden]) {
+  border-color: #1f2937 !important;
+}
+
+.dark input,
+.dark select,
+.dark textarea {
+  background-color: #1f2937 !important;
+  border-color: #374151 !important;
+  color: #f9fafb !important;
+}
+
+.dark input::placeholder,
+.dark textarea::placeholder {
+  color: #6b7280 !important;
+}
+
 button,
 input,
 textarea,
@@ -89,6 +168,11 @@ select {
   background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
   background-size: 200% 100%;
   animation: shimmer 1.5s infinite;
+}
+
+.dark .shimmer {
+  background: linear-gradient(90deg, #1f2937 25%, #374151 50%, #1f2937 75%);
+  background-size: 200% 100%;
 }
 
 /* Fade in animation */
@@ -150,6 +234,24 @@ select {
 }
 .animate-count {
   animation: countUp 0.5s ease-out forwards;
+}
+
+/* Marquee scrolling ticker animation */
+@keyframes marqueeScroll {
+  0% {
+    transform: translateX(100%);
+  }
+  100% {
+    transform: translateX(-100%);
+  }
+}
+.animate-marquee {
+  display: inline-block;
+  white-space: nowrap;
+  animation: marqueeScroll 25s linear infinite;
+}
+.animate-marquee:hover {
+  animation-play-state: paused;
 }
 
 /* Sidebar nav item active glow */

@@ -1,15 +1,15 @@
 import { useState, type FormEvent } from 'react';
 import {
+  Activity,
   Bot,
   CheckCircle2,
+  Cpu,
   LifeBuoy,
   Lock,
   LogIn,
   Mail,
-  Sparkles,
   User,
   UserPlus,
-  Zap,
 } from 'lucide-react';
 import { apiFetch } from '../../lib/api';
 import type { AuthUser } from '../../lib/types';
@@ -23,12 +23,12 @@ const features = [
     desc: 'Groq AI automatically handles common requests',
   },
   {
-    icon: Zap,
+    icon: Activity,
     label: 'Real-time Dashboard',
     desc: 'Live metrics and team performance at a glance',
   },
   {
-    icon: Sparkles,
+    icon: Cpu,
     label: 'Smart Categorization',
     desc: 'AI classifies and prioritizes tickets instantly',
   },

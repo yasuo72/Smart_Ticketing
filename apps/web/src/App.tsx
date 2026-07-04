@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { apiFetch } from './lib/api';
 import type { AuthUser, NavView } from './lib/types';
+import { applyTheme, getInitialTheme } from './lib/theme';
 import { LoginPage } from './components/auth/LoginPage';
 import { Sidebar } from './components/layout/Sidebar';
 import { DashboardPage } from './components/dashboard/DashboardPage';
@@ -13,6 +14,11 @@ export function App() {
   const [sessionChecked, setSessionChecked] = useState(false);
   const [activeView, setActiveView] = useState<NavView>('tickets');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  // Apply saved theme on mount
+  useEffect(() => {
+    applyTheme(getInitialTheme());
+  }, []);
 
   // Restore session on mount
   useEffect(() => {
@@ -117,29 +123,30 @@ export function App() {
   }
 
   const handleToggleMobileMenu = () => setMobileMenuOpen((prev) => !prev);
+  const isCustomer = currentUser?.role === 'CUSTOMER';
 
   // Resolve which page to show
   function renderPage() {
     if (!currentUser) return null;
     switch (activeView) {
       case 'dashboard':
-        return currentUser.role === 'CUSTOMER' ? (
-          <TicketsPage user={currentUser} onToggleMobileMenu={handleToggleMobileMenu} />
+        return isCustomer ? (
+          <TicketsPage user={currentUser} onToggleMobileMenu={handleToggleMobileMenu} isCustomer={isCustomer} />
         ) : (
           <DashboardPage onToggleMobileMenu={handleToggleMobileMenu} />
         );
       case 'tickets':
-        return <TicketsPage user={currentUser} onToggleMobileMenu={handleToggleMobileMenu} />;
+        return <TicketsPage user={currentUser} onToggleMobileMenu={handleToggleMobileMenu} isCustomer={isCustomer} />;
       case 'users':
         return currentUser.role === 'ADMIN' ? (
           <AdminPage onToggleMobileMenu={handleToggleMobileMenu} />
         ) : (
-          <TicketsPage user={currentUser} onToggleMobileMenu={handleToggleMobileMenu} />
+          <TicketsPage user={currentUser} onToggleMobileMenu={handleToggleMobileMenu} isCustomer={isCustomer} />
         );
       case 'settings':
-        return <SettingsPage user={currentUser} onToggleMobileMenu={handleToggleMobileMenu} />;
+        return <SettingsPage user={currentUser} onToggleMobileMenu={handleToggleMobileMenu} isCustomer={isCustomer} />;
       default:
-        return <TicketsPage user={currentUser} onToggleMobileMenu={handleToggleMobileMenu} />;
+        return <TicketsPage user={currentUser} onToggleMobileMenu={handleToggleMobileMenu} isCustomer={isCustomer} />;
     }
   }
 

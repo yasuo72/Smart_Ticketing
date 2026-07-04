@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import {
+  Activity,
   Bell,
   Bot,
   Database,
@@ -12,28 +13,35 @@ import {
   Shield,
   Sun,
   User,
-  Zap,
 } from 'lucide-react';
 import { apiUrl } from '../../lib/api';
 import type { AuthUser } from '../../lib/types';
 import { getInitials } from '../../lib/utils';
 import { Header } from '../layout/Header';
+import { applyTheme, getInitialTheme } from '../../lib/theme';
 
 type SettingSection = 'profile' | 'notifications' | 'appearance' | 'security' | 'api';
 
 export function SettingsPage({
   user,
   onToggleMobileMenu,
+  isCustomer,
 }: {
   user: AuthUser;
   onToggleMobileMenu?: () => void;
+  isCustomer?: boolean;
 }) {
   const [activeSection, setActiveSection] = useState<SettingSection>('profile');
   const [name, setName] = useState(user.name);
   const [saved, setSaved] = useState(false);
-  const [theme, setTheme] = useState<'light' | 'dark'>('light');
+  const [theme, setTheme] = useState<'light' | 'dark'>(getInitialTheme());
   const [emailNotifs, setEmailNotifs] = useState(true);
   const [browserNotifs, setBrowserNotifs] = useState(false);
+
+  const handleThemeChange = (newTheme: 'light' | 'dark') => {
+    setTheme(newTheme);
+    applyTheme(newTheme);
+  };
 
   const sections: { id: SettingSection; label: string; icon: React.ElementType }[] = [
     { id: 'profile', label: 'Profile', icon: User },
@@ -50,7 +58,7 @@ export function SettingsPage({
 
   return (
     <div className="flex flex-col h-full overflow-hidden">
-      <Header view="settings" onToggleMobileMenu={onToggleMobileMenu} />
+      <Header view="settings" onToggleMobileMenu={onToggleMobileMenu} isCustomer={isCustomer} />
 
       <div className="flex flex-col sm:flex-row flex-1 overflow-hidden">
         {/* Settings sidebar */}
@@ -210,7 +218,7 @@ export function SettingsPage({
                   {(['light', 'dark'] as const).map((t) => (
                     <button
                       key={t}
-                      onClick={() => setTheme(t)}
+                      onClick={() => handleThemeChange(t)}
                       className={`flex flex-col items-center gap-2 rounded-xl border-2 p-4 transition cursor-pointer ${
                         theme === t
                           ? 'border-indigo-500 bg-indigo-50'
@@ -230,7 +238,7 @@ export function SettingsPage({
                   ))}
                 </div>
                 <p className="mt-3 text-xs text-slate-400">
-                  Full dark mode coming in a future release.
+                  Theme preference is saved and applied instantly across all workspace views.
                 </p>
               </div>
             </div>
@@ -362,7 +370,7 @@ export function SettingsPage({
                   ],
                 },
                 {
-                  icon: Zap,
+                  icon: Activity,
                   title: 'Deployment',
                   color: '#8b5cf6',
                   items: [

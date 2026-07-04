@@ -1,4 +1,4 @@
-import { Bot, LayoutDashboard, LifeBuoy, LogOut, Settings, Ticket, Users, Zap } from 'lucide-react';
+import { Bot, Cpu, LayoutDashboard, LifeBuoy, LogOut, Settings, Ticket, Users } from 'lucide-react';
 import type { AuthUser, NavView } from '../../lib/types';
 import { cn, getInitials } from '../../lib/utils';
 
@@ -138,7 +138,7 @@ export function Sidebar({
                   llama-3.3-70b
                 </p>
               </div>
-              <Zap className="ml-auto size-3 text-amber-400" />
+              <Cpu className="ml-auto size-3 text-indigo-400" />
             </div>
           </div>
         </nav>
